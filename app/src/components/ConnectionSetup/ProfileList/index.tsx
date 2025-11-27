@@ -27,7 +27,7 @@ function ProfileList(props: Props) {
 
   const sortedConnections = React.useMemo(() => {
     const connectionArray = Object.values(connections)
-    
+
     switch (sortBy) {
       case 'name':
         return connectionArray.sort((a, b) => a.name.localeCompare(b.name))
@@ -51,7 +51,7 @@ function ProfileList(props: Props) {
     if (sortBy !== 'folder') {
       return { '': sortedConnections }
     }
-    
+
     const groups: { [folder: string]: ConnectionOptions[] } = {}
     sortedConnections.forEach(connection => {
       const folder = connection.folder || 'Ungrouped'
@@ -101,11 +101,7 @@ function ProfileList(props: Props) {
       <IconButton size="small" onClick={handleSortMenuOpen} title="Sort connections">
         <SortIcon fontSize="small" />
       </IconButton>
-      <Menu
-        anchorEl={sortMenuAnchor}
-        open={Boolean(sortMenuAnchor)}
-        onClose={handleSortMenuClose}
-      >
+      <Menu anchorEl={sortMenuAnchor} open={Boolean(sortMenuAnchor)} onClose={handleSortMenuClose}>
         <MenuItem onClick={() => handleSortChange('name')} selected={sortBy === 'name'}>
           Sort by Name
         </MenuItem>
@@ -122,20 +118,18 @@ function ProfileList(props: Props) {
   return (
     <List style={{ height: '100%' }} component="nav" subheader={createConnectionButton}>
       <div className={classes.list}>
-        {sortBy === 'folder' ? (
-          Object.entries(groupedConnections).map(([folder, connections]) => (
-            <div key={folder}>
-              <ListSubheader className={classes.folderHeader}>{folder}</ListSubheader>
-              {connections.map(connection => (
-                <ConnectionItem connection={connection} key={connection.id} selected={selected === connection.id} />
-              ))}
-            </div>
-          ))
-        ) : (
-          sortedConnections.map(connection => (
-            <ConnectionItem connection={connection} key={connection.id} selected={selected === connection.id} />
-          ))
-        )}
+        {sortBy === 'folder'
+          ? Object.entries(groupedConnections).map(([folder, connections]) => (
+              <div key={folder}>
+                <ListSubheader className={classes.folderHeader}>{folder}</ListSubheader>
+                {connections.map(connection => (
+                  <ConnectionItem connection={connection} key={connection.id} selected={selected === connection.id} />
+                ))}
+              </div>
+            ))
+          : sortedConnections.map(connection => (
+              <ConnectionItem connection={connection} key={connection.id} selected={selected === connection.id} />
+            ))}
       </div>
     </List>
   )
