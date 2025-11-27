@@ -15,6 +15,7 @@ import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 import { connectionsMigrator } from './migrations/Connection'
 import { rendererRpc, readFromFile } from '../../../events'
 import { makeOpenDialogRpc } from '../../../events/OpenDialogRequest'
+import { v4 } from 'uuid'
 
 export interface ConnectionDictionary {
   [s: string]: ConnectionOptions
@@ -100,6 +101,32 @@ export const saveConnectionSettings = () => async (dispatch: Dispatch<any>, getS
   }
 }
 
+export const saveConnectionAsCopy = () => async (dispatch: Dispatch<any>, getState: () => AppState) => {
+  const state = getState()
+  const selectedId = state.connectionManager.selected
+  
+  if (!selectedId) {
+    return
+  }
+  
+  const currentConnection = state.connectionManager.connections[selectedId]
+  
+  if (!currentConnection) {
+    return
+  }
+
+  const newConnection: ConnectionOptions = {
+    ...currentConnection,
+    id: v4(),
+    name: `${currentConnection.name} (Copy)`,
+    createdAt: Date.now(),
+  }
+
+  dispatch(addConnection(newConnection))
+  dispatch(selectConnection(newConnection.id))
+  dispatch(saveConnectionSettings())
+}
+
 export const updateConnection = (connectionId: string, changeSet: Partial<ConnectionOptions>): Action => ({
   connectionId,
   changeSet,
@@ -151,6 +178,57 @@ export const setSortBy = (sortBy: SortOption): Action => ({
   type: ActionTypes.CONNECTION_MANAGER_SET_SORT_BY,
   sortBy,
 })
+
+export const toggleFolderCollapse = (folderName: string): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_TOGGLE_FOLDER_COLLAPSE,
+  folderName,
+})
+
+export const setFolderOrder = (folderOrder: string[]): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_SET_FOLDER_ORDER,
+  folderOrder,
+})
+
+export const setConnectionOrder = (folderName: string, connectionOrder: string[]): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_SET_CONNECTION_ORDER,
+  folderName,
+  connectionOrder,
+})
+
+export const renameFolder = (oldName: string, newName: string) => (dispatch: Dispatch<any>, getState: () => AppState) => {
+  const connections = getState().connectionManager.connections
+  const updates: { [id: string]: Partial<ConnectionOptions> } = {}
+  
+  Object.entries(connections).forEach(([id, connection]) => {
+    if (connection.folder === oldName) {
+      updates[id] = { folder: newName }
+    }
+  })
+  
+  Object.entries(updates).forEach(([id, update]) => {
+    dispatch(updateConnection(id, update))
+  })
+  
+  dispatch(saveConnectionSettings())
+}
+
+export const deleteFolder = (folderName: string, deleteConnections: boolean) => (dispatch: Dispatch<any>, getState: () => AppState) => {
+  const connections = getState().connectionManager.connections
+  
+  Object.entries(connections).forEach(([id, connection]) => {
+    if (connection.folder === folderName) {
+      if (deleteConnections) {
+        dispatch(deleteConnection(id))
+      } else {
+        dispatch(updateConnection(id, { folder: undefined }))
+      }
+    }
+  })
+  
+  if (!deleteConnections) {
+    dispatch(saveConnectionSettings())
+  }
+}
 
 export const deleteConnection = (connectionId: string) => (dispatch: Dispatch<any>, getState: () => AppState) => {
   const connectionIds = Object.keys(getState().connectionManager.connections)
