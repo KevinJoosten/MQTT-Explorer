@@ -1,6 +1,8 @@
 import ConnectButton from './ConnectButton'
 import React, { useCallback, useState } from 'react'
 import Save from '@material-ui/icons/Save'
+import FileCopy from '@material-ui/icons/FileCopy'
+import ArrowDropDown from '@material-ui/icons/ArrowDropDown'
 import Delete from '@material-ui/icons/Delete'
 import Settings from '@material-ui/icons/Settings'
 import Visibility from '@material-ui/icons/Visibility'
@@ -16,12 +18,14 @@ import { ToggleSwitch } from './ToggleSwitch'
 import { useGlobalKeyEventHandler } from '../../effects/useGlobalKeyEventHandler'
 import {
   Button,
+  ButtonGroup,
   FormControl,
   Grid,
   IconButton,
   Input,
   InputAdornment,
   InputLabel,
+  Menu,
   MenuItem,
   TextField,
 } from '@material-ui/core'
@@ -39,6 +43,7 @@ const protocols = ['mqtt', 'ws']
 
 function ConnectionSettings(props: Props) {
   const [showPassword, setShowPassword] = useState(false)
+  const [saveMenuAnchor, setSaveMenuAnchor] = useState<null | HTMLElement>(null)
 
   const toggleConnect = useCallback(() => {
     if (props.connecting) {
@@ -51,7 +56,7 @@ function ConnectionSettings(props: Props) {
     }
 
     const mqttOptions = toMqttConnection(props.connection)
-    if (mqttOptions) {
+    if (mqttOptions && props.connection.host) {
       props.actions.connect(mqttOptions, props.connection.id)
     }
   }, [props.connection, props.connecting])
@@ -166,26 +171,23 @@ function ConnectionSettings(props: Props) {
               margin="normal"
             />
           </Grid>
-          <Grid item={true} xs={6}>
-            <TextField
-              label="Folder"
-              className={classes.textField}
-              value={connection.folder || ''}
-              onChange={handleChange('folder')}
-              margin="normal"
-              placeholder="Optional"
-            />
-          </Grid>
-          <Grid item={true} xs={6}>
+          <Grid item={true} xs={3}>
             <ToggleSwitch
               label="Validate certificate"
               classes={classes}
               value={connection.certValidation}
               toggle={toggleCertValidation}
+              labelPlacement="bottom"
             />
           </Grid>
-          <Grid item={true} xs={6}>
-            <ToggleSwitch label="Encryption (tls)" classes={classes} value={connection.encryption} toggle={toggleTls} />
+          <Grid item={true} xs={3}>
+            <ToggleSwitch 
+              label="Encryption (tls)" 
+              classes={classes} 
+              value={connection.encryption} 
+              toggle={toggleTls}
+              labelPlacement="bottom"
+            />
           </Grid>
           <Grid item={true} xs={2}>
             {renderProtocols()}
@@ -249,15 +251,29 @@ function ConnectionSettings(props: Props) {
               <Settings /> Advanced
             </Button>
           </div>
-          <div style={{ float: 'right' }}>
-            <Button
-              variant="contained"
-              color="secondary"
-              className={classes.button}
-              onClick={props.managerActions.saveConnectionSettings}
+          <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
+            <ButtonGroup variant="contained" color="secondary" className={classes.button}>
+              <Button onClick={props.managerActions.saveConnectionSettings}>
+                <Save /> Save
+              </Button>
+              <Button size="small" onClick={(e) => setSaveMenuAnchor(e.currentTarget)}>
+                <ArrowDropDown />
+              </Button>
+            </ButtonGroup>
+            <Menu
+              anchorEl={saveMenuAnchor}
+              open={Boolean(saveMenuAnchor)}
+              onClose={() => setSaveMenuAnchor(null)}
             >
-              <Save /> Save
-            </Button>
+              <MenuItem
+                onClick={() => {
+                  props.managerActions.saveConnectionAsCopy()
+                  setSaveMenuAnchor(null)
+                }}
+              >
+                <FileCopy fontSize="small" style={{ marginRight: 8 }} /> Save as Copy
+              </MenuItem>
+            </Menu>
             <ConnectButton toggle={toggleConnect} connecting={props.connecting} classes={classes} />
           </div>
         </div>
