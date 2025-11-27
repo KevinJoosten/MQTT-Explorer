@@ -5,6 +5,7 @@ import { toMqttConnection, ConnectionOptions } from '../../../model/ConnectionOp
 import { withStyles, Theme } from '@material-ui/core/styles'
 import { bindActionCreators } from 'redux'
 import { connectionActions, connectionManagerActions } from '../../../actions'
+import LockIcon from '@material-ui/icons/Lock'
 
 export interface Props {
   connection: ConnectionOptions
@@ -14,6 +15,9 @@ export interface Props {
   }
   selected: boolean
   classes: any
+  onConnectionDragStart?: () => void
+  onConnectionDragEnd?: () => void
+  onConnectionDrop?: () => void
 }
 
 const ConnectionItem = (props: Props) => {
@@ -24,19 +28,50 @@ const ConnectionItem = (props: Props) => {
     }
   }, [props.connection, props])
 
+  const handleDragStart = useCallback((event: React.DragEvent) => {
+    event.dataTransfer.setData('connectionId', props.connection.id)
+    event.dataTransfer.effectAllowed = 'move'
+    props.onConnectionDragStart?.()
+  }, [props.connection.id, props.onConnectionDragStart])
+
+  const handleDragEnd = useCallback(() => {
+    props.onConnectionDragEnd?.()
+  }, [props.onConnectionDragEnd])
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const handleDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    props.onConnectionDrop?.()
+  }, [props.onConnectionDrop])
+
   const connection = props.connection.host && toMqttConnection(props.connection)
   return (
     <ListItem
       button={true}
       selected={props.selected}
       style={{ display: 'block' }}
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       onClick={() => props.actions.connectionManager.selectConnection(props.connection.id)}
       onDoubleClick={() => {
         props.actions.connectionManager.selectConnection(props.connection.id)
         connect()
       }}
     >
-      <Typography className={props.classes.name}>{props.connection.name || 'mqtt broker'}</Typography>
+      <Typography className={props.classes.name}>
+        {props.connection.selfSignedCertificate && (
+          <LockIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 4, fontSize: '1em' }} />
+        )}
+        {props.connection.name || 'mqtt broker'}
+      </Typography>
       <Typography className={props.classes.details}>{connection && connection.url}</Typography>
     </ListItem>
   )
