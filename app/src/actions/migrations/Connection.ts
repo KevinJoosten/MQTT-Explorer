@@ -68,6 +68,18 @@ let migrations: Migration[] = [
       }
     },
   },
+  // Added folder and createdAt fields
+  {
+    from: 1,
+    apply: (connection: ConnectionOptions): ConnectionOptions => {
+      return {
+        ...connection,
+        configVersion: 2,
+        folder: undefined,
+        createdAt: Date.now(),
+      }
+    },
+  },
 ]
 
 const connectionMigrator = new ConfigMigrator(migrations)

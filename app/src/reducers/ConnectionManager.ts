@@ -2,11 +2,14 @@ import { ConnectionOptions } from '../model/ConnectionOptions'
 import { createReducer } from './lib'
 import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 
+export type SortOption = 'name' | 'createdAt' | 'folder'
+
 export interface ConnectionManagerState {
   connections: { [s: string]: ConnectionOptions }
   selected?: string
   showAdvancedSettings: boolean
   showCertificateSettings: boolean
+  sortBy: SortOption
 }
 
 const initialState: ConnectionManagerState = {
@@ -14,6 +17,7 @@ const initialState: ConnectionManagerState = {
   selected: undefined,
   showAdvancedSettings: false,
   showCertificateSettings: false,
+  sortBy: 'name',
 }
 
 export type Action =
@@ -26,6 +30,7 @@ export type Action =
   | ToggleCertificateSettings
   | DeleteSubscription
   | AddSubscription
+  | SetSortBy
 
 export enum ActionTypes {
   CONNECTION_MANAGER_SET_CONNECTIONS = 'CONNECTION_MANAGER_SET_CONNECTIONS',
@@ -37,6 +42,7 @@ export enum ActionTypes {
   CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS = 'CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS',
   CONNECTION_MANAGER_ADD_SUBSCRIPTION = 'CONNECTION_MANAGER_ADD_SUBSCRIPTION',
   CONNECTION_MANAGER_DELETE_SUBSCRIPTION = 'CONNECTION_MANAGER_DELETE_SUBSCRIPTION',
+  CONNECTION_MANAGER_SET_SORT_BY = 'CONNECTION_MANAGER_SET_SORT_BY',
 }
 
 export interface SetConnections {
@@ -85,6 +91,11 @@ export interface ToggleCertificateSettings {
   type: ActionTypes.CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS
 }
 
+export interface SetSortBy {
+  type: ActionTypes.CONNECTION_MANAGER_SET_SORT_BY
+  sortBy: SortOption
+}
+
 export const connectionManagerReducer = createReducer(initialState, {
   CONNECTION_MANAGER_SET_CONNECTIONS: setConnections,
   CONNECTION_MANAGER_SELECT_CONNECTION: selectConnection,
@@ -95,6 +106,7 @@ export const connectionManagerReducer = createReducer(initialState, {
   CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS: toggleCertificateSettings,
   CONNECTION_MANAGER_DELETE_SUBSCRIPTION: deleteSubscription,
   CONNECTION_MANAGER_ADD_SUBSCRIPTION: addSubscription,
+  CONNECTION_MANAGER_SET_SORT_BY: setSortBy,
 })
 
 function setConnections(state: ConnectionManagerState, action: SetConnections): ConnectionManagerState {
@@ -220,5 +232,12 @@ function updateConnection(state: ConnectionManagerState, action: UpdateConnectio
       ...state.connections,
       [action.connectionId]: connection,
     },
+  }
+}
+
+function setSortBy(state: ConnectionManagerState, action: SetSortBy): ConnectionManagerState {
+  return {
+    ...state,
+    sortBy: action.sortBy,
   }
 }

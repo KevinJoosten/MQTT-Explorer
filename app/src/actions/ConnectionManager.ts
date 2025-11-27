@@ -10,7 +10,7 @@ import { default as persistentStorage, StorageIdentifier } from '../utils/Persis
 import { Dispatch } from 'redux'
 import { showError } from './Global'
 import * as path from 'path'
-import { ActionTypes, Action } from '../reducers/ConnectionManager'
+import { ActionTypes, Action, SortOption } from '../reducers/ConnectionManager'
 import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 import { connectionsMigrator } from './migrations/Connection'
 import { rendererRpc, readFromFile } from '../../../events'
@@ -145,6 +145,11 @@ export const toggleAdvancedSettings = (): Action => ({
 
 export const toggleCertificateSettings = (): Action => ({
   type: ActionTypes.CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS,
+})
+
+export const setSortBy = (sortBy: SortOption): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_SET_SORT_BY,
+  sortBy,
 })
 
 export const deleteConnection = (connectionId: string) => (dispatch: Dispatch<any>, getState: () => AppState) => {
