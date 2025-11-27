@@ -13,6 +13,8 @@ import { useGlobalKeyEventHandler } from '../../../effects/useGlobalKeyEventHand
 import { SortOption } from '../../../reducers/ConnectionManager'
 import SortIcon from '@material-ui/icons/Sort'
 
+const UNGROUPED_FOLDER_NAME = 'Ungrouped'
+
 interface Props {
   classes: any
   selected?: string
@@ -54,7 +56,7 @@ function ProfileList(props: Props) {
 
     const groups: { [folder: string]: ConnectionOptions[] } = {}
     sortedConnections.forEach(connection => {
-      const folder = connection.folder || 'Ungrouped'
+      const folder = connection.folder || UNGROUPED_FOLDER_NAME
       if (!groups[folder]) {
         groups[folder] = []
       }

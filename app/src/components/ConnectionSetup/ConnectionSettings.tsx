@@ -156,7 +156,7 @@ function ConnectionSettings(props: Props) {
     <div>
       <form className={classes.container} noValidate={true} autoComplete="off">
         <Grid container={true} spacing={3}>
-          <Grid item={true} xs={5}>
+          <Grid item={true} xs={6}>
             <TextField
               autoFocus={true}
               label="Name"
@@ -166,7 +166,7 @@ function ConnectionSettings(props: Props) {
               margin="normal"
             />
           </Grid>
-          <Grid item={true} xs={3}>
+          <Grid item={true} xs={6}>
             <TextField
               label="Folder"
               className={classes.textField}
@@ -176,7 +176,7 @@ function ConnectionSettings(props: Props) {
               placeholder="Optional"
             />
           </Grid>
-          <Grid item={true} xs={2}>
+          <Grid item={true} xs={6}>
             <ToggleSwitch
               label="Validate certificate"
               classes={classes}
@@ -184,7 +184,7 @@ function ConnectionSettings(props: Props) {
               toggle={toggleCertValidation}
             />
           </Grid>
-          <Grid item={true} xs={2}>
+          <Grid item={true} xs={6}>
             <ToggleSwitch label="Encryption (tls)" classes={classes} value={connection.encryption} toggle={toggleTls} />
           </Grid>
           <Grid item={true} xs={2}>
