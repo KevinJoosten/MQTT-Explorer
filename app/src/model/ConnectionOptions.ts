@@ -10,7 +10,7 @@ export interface CertificateParameters {
 }
 
 export interface ConnectionOptions {
-  configVersion: 1
+  configVersion: 1 | 2
   type: 'mqtt'
   id: string
   host: string
@@ -27,6 +27,8 @@ export interface ConnectionOptions {
   clientKey?: CertificateParameters
   clientId?: string
   subscriptions: Array<Subscription>
+  folder?: string
+  createdAt?: number
 }
 
 export function toMqttConnection(options: ConnectionOptions): MqttOptions | undefined {
@@ -55,7 +57,7 @@ function generateClientId() {
 
 export function createEmptyConnection(): ConnectionOptions {
   return {
-    configVersion: 1,
+    configVersion: 2,
     certValidation: true,
     clientId: generateClientId(),
     id: v4() as string,
@@ -71,6 +73,8 @@ export function createEmptyConnection(): ConnectionOptions {
     host: '',
     port: 1883,
     protocol: 'mqtt',
+    folder: undefined,
+    createdAt: Date.now(),
   }
 }
 

@@ -6,6 +6,7 @@ export interface Scene {
 }
 
 export type SceneNames =
+  | 'folder_management'
   | 'connect'
   | 'topic_updates'
   | 'numeric_plots'

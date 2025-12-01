@@ -49,7 +49,7 @@ function ValuePanel(props: Props) {
           <ActionButtons />
         </span>
         <span style={{ flex: 6, textAlign: 'right' }}>
-          {props.node.message.retain ? <DeleteSelectedTopicButton /> : null}
+          {props.node.message.retain && props.node.message.payload ? <DeleteSelectedTopicButton /> : null}
         </span>
         {messageMetaInfo()}
       </div>
