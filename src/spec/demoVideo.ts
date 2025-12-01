@@ -22,6 +22,7 @@ import { showNumericPlot } from './scenarios/showNumericPlot'
 import { showOffDiffCapability } from './scenarios/showOffDiffCapability'
 import { showZoomLevel } from './scenarios/showZoomLevel'
 import { showSparkPlugDecoding } from './scenarios/showSparkplugDecoding'
+import { testFolderManagement } from './scenarios/testFolderManagement'
 
 /**
  *  A convenience method that handles gracefully cleaning up the test run.
@@ -68,10 +69,14 @@ async function doStuff() {
   // Direct Electron console to Node terminal.
   page.on('console', console.log)
 
-  // Wait for Username input to be visible
-  await page.locator('//label[contains(text(), "Username")]/..//input')
-
   const scenes = new SceneBuilder()
+  
+  await scenes.record('folder_management', async () => {
+    await showText('Organize with Folders', 1500, page, 'top')
+    await testFolderManagement(page)
+    await hideText(page)
+  })
+
   await scenes.record('connect', async () => {
     await connectTo('127.0.0.1', page)
     await MockSparkplug.run() // Start sparkplug client after connect or birth topics will be missed
@@ -94,15 +99,7 @@ async function doStuff() {
     await showOffDiffCapability(page)
     await hideText(page)
   })
-
-  // disable this scenario for now until expandTopic is sorted out
-  // await scenes.record('publish_topic', async () => {
-  //   await showText('Publish topics', 1500, page, 'top')
-  //   await clickOnHistory(page)
-  //   await publishTopic(page)
-  //   await sleep(1000)
-  // })
-
+  
   await scenes.record('clipboard', async () => {
     await showText('Copy to Clipboard', 1500, page)
     await copyTopicToClipboard(page)
