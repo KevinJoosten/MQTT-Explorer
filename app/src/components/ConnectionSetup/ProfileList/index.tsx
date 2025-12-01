@@ -6,7 +6,7 @@ import { AppState } from '../../../reducers'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { connectionManagerActions } from '../../../actions'
-import { ConnectionOptions } from '../../../model/ConnectionOptions'
+import { ConnectionOptions, createEmptyConnection } from '../../../model/ConnectionOptions'
 import { KeyCodes } from '../../../utils/KeyCodes'
 import {
   List,
@@ -185,17 +185,12 @@ function ProfileList(props: Props) {
 
   const handleFolderDialogConfirm = () => {
     if (newFolderName.trim()) {
-      // Create a new connection in this folder to make it visible
-      actions.createConnection()
-      // Update the newly created connection with the folder name
-      setTimeout(() => {
-        const connections = Object.values(props.connections)
-        const latestConnection = connections[connections.length - 1]
-        if (latestConnection) {
-          actions.updateConnection(latestConnection.id, { folder: newFolderName.trim() })
-          actions.saveConnectionSettings()
-        }
-      }, 100)
+      // Create a new empty connection directly assigned to this folder
+      const newConnection = createEmptyConnection()
+      newConnection.folder = newFolderName.trim()
+      actions.addConnection(newConnection)
+      actions.selectConnection(newConnection.id)
+      actions.saveConnectionSettings()
     }
     handleFolderDialogClose()
   }
