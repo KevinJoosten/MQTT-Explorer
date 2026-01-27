@@ -70,6 +70,9 @@ export const selectTopicWithMouseOver = (doSelect: boolean) => (dispatch: Dispat
 
 export const setValueDisplayMode =
   (valueRendererDisplayMode: ValueRendererDisplayMode) => (dispatch: Dispatch<any>) => {
+    console.log('=== setValueDisplayMode called ===')
+    console.log('New mode:', valueRendererDisplayMode)
+    console.trace('Call stack')
     dispatch({
       valueRendererDisplayMode,
       type: ActionTypes.SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE,

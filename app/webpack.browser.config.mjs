@@ -32,8 +32,7 @@ export default {
       crypto: false,
       url: 'url/',
       os: 'os-browserify/browser',
-      
-      events: 'events/',
+      events: 'events',
     },
   },
 

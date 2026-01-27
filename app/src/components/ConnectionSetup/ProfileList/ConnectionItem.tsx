@@ -6,7 +6,7 @@ import { withStyles } from '@mui/styles'
 import { Theme } from '@mui/material/styles'
 import { bindActionCreators } from 'redux'
 import { connectionActions, connectionManagerActions } from '../../../actions'
-import LockIcon from '@material-ui/icons/Lock'
+import LockIcon from '@mui/icons-material/Lock'
 
 export interface Props {
   connection: ConnectionOptions

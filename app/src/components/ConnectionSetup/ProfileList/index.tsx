@@ -23,12 +23,13 @@ import {
   RadioGroup,
   FormControlLabel,
   DialogContentText,
-} from '@material-ui/core'
-import { Theme, withStyles } from '@material-ui/core/styles'
+} from '@mui/material'
+import { Theme } from '@mui/material/styles'
+import { withStyles } from '@mui/styles'
 import { useGlobalKeyEventHandler } from '../../../effects/useGlobalKeyEventHandler'
 import { SortOption } from '../../../reducers/ConnectionManager'
-import SearchIcon from '@material-ui/icons/Search'
-import ClearIcon from '@material-ui/icons/Clear'
+import SearchIcon from '@mui/icons-material/Search'
+import ClearIcon from '@mui/icons-material/Clear'
 
 const UNGROUPED_FOLDER_NAME = 'Ungrouped'
 

@@ -1,9 +1,10 @@
 import * as React from 'react'
-import Add from '@material-ui/icons/Add'
-import { Fab, Menu, MenuItem, ListItemIcon, ListItemText } from '@material-ui/core'
-import { Theme, withStyles } from '@material-ui/core/styles'
-import FolderIcon from '@material-ui/icons/Folder'
-import StorageIcon from '@material-ui/icons/Storage'
+import Add from '@mui/icons-material/Add'
+import { Fab, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material'
+import { Theme } from '@mui/material/styles'
+import { withStyles } from '@mui/styles'
+import FolderIcon from '@mui/icons-material/Folder'
+import StorageIcon from '@mui/icons-material/Storage'
 
 const styles = (theme: Theme) => ({
   addButton: {

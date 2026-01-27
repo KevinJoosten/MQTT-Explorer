@@ -32,6 +32,30 @@ interface Props {
 function DetailsTab(props: Props) {
   const { node, compareMessage, classes } = props
   const decodeMessage = useDecoder(node)
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0)
+
+  // DEBUG LOGGING
+  console.log('=== DetailsTab Render ===')
+  console.log('Topic:', node?.path() || 'none')
+  console.log('compareMessage from Redux:', compareMessage ? 'SET' : 'undefined')
+
+  // Subscribe to message updates to force re-render when new messages arrive
+  // BUT only when not comparing - comparison should be static
+  React.useEffect(() => {
+    if (!node || compareMessage) return
+
+    const handleNewMessage = () => {
+      forceUpdate()
+    }
+
+    node.onMessage.subscribe(handleNewMessage)
+    node.onMerge.subscribe(handleNewMessage)
+
+    return () => {
+      node.onMessage.unsubscribe(handleNewMessage)
+      node.onMerge.unsubscribe(handleNewMessage)
+    }
+  }, [node, compareMessage])
 
   const getDecodedValue = useCallback(() => {
     return node?.message && decodeMessage(node.message)?.message?.toUnicodeString()
@@ -143,8 +167,12 @@ function DetailsTab(props: Props) {
             <Typography variant="subtitle2" className={classes.valueTitle}>
               Current Value
             </Typography>
+            {compareMessage && (
+              <Box className={classes.actionButtons}>
+                <ActionButtons />
+              </Box>
+            )}
             <Box className={classes.actionButtons}>
-              <ActionButtons />
             </Box>
             <Box className={classes.valueActions}>
               <Copy getValue={getDecodedValue} />

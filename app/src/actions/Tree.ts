@@ -21,6 +21,10 @@ const debouncedSelectTopic = debounce(
   (topic: q.TreeNode<TopicViewModel>, dispatch: Dispatch<any>, getState: () => AppState) => {
     const previouslySelectedTopic = getState().tree.get('selectedTopic')
 
+    console.log('=== selectTopic Action ===')
+    console.log('Selected topic:', topic.path())
+    console.log('Previous topic:', previouslySelectedTopic?.path() || 'none')
+
     if (previouslySelectedTopic === topic) {
       return
     }
@@ -41,6 +45,7 @@ const debouncedSelectTopic = debounce(
       type: ActionTypes.TREE_SELECT_TOPIC,
     }
 
+    console.log('Clearing compareMessage (setting to undefined)')
     dispatch({
       type: SidebarActionTypes.SIDEBAR_SET_COMPARE_MESSAGE,
       message: undefined,

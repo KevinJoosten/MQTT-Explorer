@@ -1,19 +1,20 @@
 import ConnectButton from './ConnectButton'
 import React, { useCallback, useState } from 'react'
-import Save from '@material-ui/icons/Save'
-import FileCopy from '@material-ui/icons/FileCopy'
-import ArrowDropDown from '@material-ui/icons/ArrowDropDown'
-import Delete from '@material-ui/icons/Delete'
-import Settings from '@material-ui/icons/Settings'
-import Visibility from '@material-ui/icons/Visibility'
-import VisibilityOff from '@material-ui/icons/VisibilityOff'
+import Save from '@mui/icons-material/Save'
+import FileCopy from '@mui/icons-material/FileCopy'
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown'
+import Delete from '@mui/icons-material/Delete'
+import Settings from '@mui/icons-material/Settings'
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import { AppState } from '../../reducers'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { connectionActions, connectionManagerActions } from '../../actions'
 import { ConnectionOptions, toMqttConnection } from '../../model/ConnectionOptions'
 import { KeyCodes } from '../../utils/KeyCodes'
-import { Theme, withStyles } from '@material-ui/core/styles'
+import { Theme } from '@mui/material/styles'
+import { withStyles } from '@mui/styles'
 import { ToggleSwitch } from './ToggleSwitch'
 import { useGlobalKeyEventHandler } from '../../effects/useGlobalKeyEventHandler'
 import {
@@ -28,7 +29,7 @@ import {
   Menu,
   MenuItem,
   TextField,
-} from '@material-ui/core'
+} from '@mui/material'
 
 interface Props {
   connection: ConnectionOptions
@@ -221,16 +222,17 @@ function ConnectionSettings(props: Props) {
             />
           </Grid>
           <Grid item={true} xs={requiresBasePath() ? 4 : 6}>
-            <FormControl className={`${classes.textField} ${classes.inputFormControl}`}>
-              <InputLabel htmlFor="adornment-password">Password</InputLabel>
-              <Input
-                id="adornment-password"
-                type={showPassword ? 'text' : 'password'}
-                value={connection.password}
-                onChange={handleChange('password')}
-                endAdornment={<PasswordVisibilityButton showPassword={showPassword} toggle={handleClickShowPassword} />}
-              />
-            </FormControl>
+            <TextField
+              label="Password"
+              className={classes.textField}
+              type={showPassword ? 'text' : 'password'}
+              value={connection.password}
+              onChange={handleChange('password')}
+              margin="normal"
+              InputProps={{
+                endAdornment: <PasswordVisibilityButton showPassword={showPassword} toggle={handleClickShowPassword} />,
+              }}
+            />
           </Grid>
         </Grid>
         <br />
@@ -301,7 +303,9 @@ const styles = (theme: Theme) => ({
     width: '100%',
   },
   switch: {
-    marginTop: 0,
+    marginTop: '16px',
+    display: 'flex',
+    alignItems: 'center',
   },
   button: {
     margin: theme.spacing(1),

@@ -33,6 +33,7 @@ export type SceneNames =
   | 'mobile_end'
 
 export const SCENE_TITLES: Record<SceneNames, string> = {
+  folder_management: 'Folder Management',
   connect: 'Connecting to MQTT Broker',
   topic_updates: 'Topic Updates',
   numeric_plots: 'Plot Topic History',

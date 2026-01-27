@@ -30,7 +30,7 @@ export const MessageHistory: React.FC<Props> = props => {
   const [, setLastUpdate] = React.useState(Date.now())
   const updateNodeThrottled = React.useCallback(
     throttle(() => {
-      setLastUpdate
+      setLastUpdate(Date.now())
     }, 300),
     []
   )
@@ -128,4 +128,4 @@ const mapDispatchToProps = (dispatch: any) => {
   }
 }
 
-export default connect(null, mapDispatchToProps)(React.memo(MessageHistory))
+export default connect(null, mapDispatchToProps)(MessageHistory)

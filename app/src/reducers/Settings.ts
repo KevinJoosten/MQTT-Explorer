@@ -50,7 +50,7 @@ const initialState = Record<SettingsStateModel>({
   autoExpandLimit: 0,
   topicOrder: TopicOrder.none,
   highlightTopicUpdates: true,
-  valueRendererDisplayMode: 'diff',
+  valueRendererDisplayMode: 'raw',
   selectTopicWithMouseOver: false,
   theme: 'light',
   topicFilter: undefined,

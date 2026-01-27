@@ -11,7 +11,8 @@ import {
   Box,
   Divider,
 } from '@mui/material'
-import { rendererRpc, getAppVersion } from '../../../events'
+import { getAppVersion } from '../../../events'
+import { getRendererRpc } from '../eventBus'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 
 // Fallback version if RPC call fails (e.g., in browser mode during initialization)
@@ -46,6 +47,7 @@ export function AboutDialog(props: AboutDialogProps) {
 
   React.useEffect(() => {
     // Fetch version from backend
+    const rendererRpc = getRendererRpc()
     rendererRpc
       .call(getAppVersion, undefined, 5000)
       .then(v => setVersion(v))
