@@ -6,6 +6,7 @@ import PublishHistory from './PublishHistory'
 import React, { useCallback, useMemo, useState, useRef, memo } from 'react'
 import RetainSwitch from './RetainSwitch'
 import TopicInput from './TopicInput'
+import UserProperties from './UserProperties'
 import { AppState } from '../../../reducers'
 import { bindActionCreators } from 'redux'
 import { Button, Fab, Tooltip } from '@mui/material'
@@ -23,6 +24,8 @@ interface Props {
   globalActions: typeof globalActions
   retain: boolean
   editorMode: string
+  userProperties: Array<{ key: string; value: string }>
+  protocolVersion?: number
 }
 
 function useHistory(): [Array<Message>, (topic: string, payload?: string) => void] {
@@ -93,11 +96,17 @@ function Publish(props: Props) {
             editorRef={editorRef as any}
           />
           <RetainSwitch />
+          {props.protocolVersion === 5 && (
+            <UserProperties
+              userProperties={props.userProperties}
+              onChange={props.actions.setUserProperties}
+            />
+          )}
         </div>
         <PublishHistory history={history} />
       </div>
     ),
-    [props.payload, props.editorMode, history, handleSubmit, publish]
+    [props.payload, props.editorMode, props.userProperties, history, handleSubmit, publish]
   )
 }
 
@@ -212,11 +221,16 @@ const mapDispatchToProps = (dispatch: any) => {
 }
 
 const mapStateToProps = (state: AppState) => {
+  const connectionId = state.connection.connectionId
+  const connection = connectionId ? state.connectionManager.connections[connectionId] : undefined
+  
   return {
     topic: state.publish.manualTopic,
     payload: state.publish.payload,
     editorMode: state.publish.editorMode,
     retain: state.publish.retain,
+    userProperties: state.publish.userProperties,
+    protocolVersion: connection?.protocolVersion,
   }
 }
 

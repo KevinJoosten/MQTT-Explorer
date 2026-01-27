@@ -31,6 +31,11 @@ function ContentView(props: Props) {
   const [detectedHeight, setDetectedHeight] = React.useState(0)
   const [detectedSidebarWidth, setDetectedSidebarWidth] = React.useState(0)
   
+  // IMPORTANT: Always call hooks in the same order regardless of mobile/desktop
+  // to avoid "Rendered more hooks than during the previous render" error
+  const { height: resizeHeight, ref: heightRef } = useResizeDetector()
+  const { width: resizeWidth, ref: widthRef } = useResizeDetector()
+  
   // Update mobile state on resize
   React.useEffect(() => {
     const handleResize = () => {
@@ -44,16 +49,14 @@ function ContentView(props: Props) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   
-  const { height: resizeHeight, ref: heightRef } = useResizeDetector()
-  const { width: resizeWidth, ref: widthRef } = useResizeDetector()
+  // Only use resize detector values in desktop mode
+  React.useEffect(() => {
+    if (!isMobile && resizeHeight) setDetectedHeight(resizeHeight)
+  }, [isMobile, resizeHeight])
   
   React.useEffect(() => {
-    if (resizeHeight) setDetectedHeight(resizeHeight)
-  }, [resizeHeight])
-  
-  React.useEffect(() => {
-    if (resizeWidth) setDetectedSidebarWidth(resizeWidth)
-  }, [resizeWidth])
+    if (!isMobile && resizeWidth) setDetectedSidebarWidth(resizeWidth)
+  }, [isMobile, resizeWidth])
   
   const detectSize = React.useCallback((width: any, newHeight: any) => {
     setDetectedHeight(newHeight)

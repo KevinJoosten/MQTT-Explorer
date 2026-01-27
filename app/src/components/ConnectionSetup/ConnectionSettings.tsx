@@ -92,7 +92,14 @@ function ConnectionSettings(props: Props) {
       return
     }
 
-    updateConnection(name, event.target.value)
+    let value = event.target.value
+    
+    // Handle MQTT version: 'auto' means undefined (auto-negotiation)
+    if (name === 'protocolVersion') {
+      value = value === 'auto' ? undefined : parseInt(value, 10)
+    }
+
+    updateConnection(name, value)
   }
 
   const updateConnection = (name: string, value: any) => {
@@ -120,6 +127,26 @@ function ConnectionSettings(props: Props) {
         margin="normal"
       >
         {protocolItems}
+      </TextField>
+    )
+  }
+
+  const renderMqttVersion = () => {
+    const { classes, connection } = props
+
+    return (
+      <TextField
+        select={true}
+        label="MQTT Version"
+        className={classes.textField}
+        value={connection.protocolVersion || 'auto'}
+        onChange={handleChange('protocolVersion')}
+        margin="normal"
+      >
+        <MenuItem value="auto">Auto</MenuItem>
+        <MenuItem value={5}>v5.0</MenuItem>
+        <MenuItem value={4}>v3.1.1</MenuItem>
+        <MenuItem value={3}>v3.1</MenuItem>
       </TextField>
     )
   }
@@ -161,83 +188,107 @@ function ConnectionSettings(props: Props) {
   return (
     <div>
       <form className={classes.container} noValidate={true} autoComplete="off">
-        <Grid container={true} spacing={3}>
-          <Grid item={true} xs={6}>
-            <TextField
-              autoFocus={true}
-              label="Name"
-              className={classes.textField}
-              value={connection.name}
-              onChange={handleChange('name')}
-              margin="normal"
-            />
-          </Grid>
-          <Grid item={true} xs={3}>
-            <ToggleSwitch
-              label="Validate certificate"
-              classes={classes}
-              value={connection.certValidation}
-              toggle={toggleCertValidation}
-              labelPlacement="bottom"
-            />
-          </Grid>
-          <Grid item={true} xs={3}>
-            <ToggleSwitch 
-              label="Encryption (tls)" 
-              classes={classes} 
-              value={connection.encryption} 
-              toggle={toggleTls}
-              labelPlacement="bottom"
-            />
-          </Grid>
-          <Grid item={true} xs={2}>
-            {renderProtocols()}
-          </Grid>
-          <Grid item={true} xs={7}>
-            <TextField
-              label="Host"
-              className={classes.textField}
-              value={connection.host}
-              onChange={handleChange('host')}
-              margin="normal"
-            />
-          </Grid>
-          <Grid item={true} xs={3}>
-            <TextField
-              label="Port"
-              className={classes.textField}
-              value={connection.port}
-              onChange={handleChange('port')}
-              margin="normal"
-            />
-          </Grid>
-          {requiresBasePath() ? renderBasePathInput() : null}
-          <Grid item={true} xs={requiresBasePath() ? 4 : 6}>
-            <TextField
-              label="Username"
-              className={classes.textField}
-              value={connection.username}
-              onChange={handleChange('username')}
-              margin="normal"
-            />
-          </Grid>
-          <Grid item={true} xs={requiresBasePath() ? 4 : 6}>
-            <TextField
-              label="Password"
-              className={classes.textField}
-              type={showPassword ? 'text' : 'password'}
-              value={connection.password}
-              onChange={handleChange('password')}
-              margin="normal"
-              InputProps={{
-                endAdornment: <PasswordVisibilityButton showPassword={showPassword} toggle={handleClickShowPassword} />,
-              }}
-            />
-          </Grid>
-        </Grid>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Row 1: Name + Toggles */}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+            <div style={{ flex: '1 1 60%' }}>
+              <TextField
+                autoFocus={true}
+                label="Name"
+                className={classes.textField}
+                value={connection.name}
+                onChange={handleChange('name')}
+                margin="normal"
+              />
+            </div>
+            <div style={{ flex: '0 0 auto' }}>
+              <ToggleSwitch
+                label="Validate certificate"
+                classes={classes}
+                value={connection.certValidation}
+                toggle={toggleCertValidation}
+                labelPlacement="bottom"
+              />
+            </div>
+            <div style={{ flex: '0 0 auto' }}>
+              <ToggleSwitch 
+                label="Encryption (tls)" 
+                classes={classes} 
+                value={connection.encryption} 
+                toggle={toggleTls}
+                labelPlacement="bottom"
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Protocol + Host + MQTT Version + Port */}
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ flex: '0 0 120px' }}>
+              {renderProtocols()}
+            </div>
+            <div style={{ flex: '1 1 auto', minWidth: '150px' }}>
+              <TextField
+                label="Host"
+                className={classes.textField}
+                value={connection.host}
+                onChange={handleChange('host')}
+                margin="normal"
+              />
+            </div>
+            <div style={{ flex: '0 0 180px' }}>
+              {renderMqttVersion()}
+            </div>
+            <div style={{ flex: '0 0 100px' }}>
+              <TextField
+                label="Port"
+                className={classes.textField}
+                value={connection.port}
+                onChange={handleChange('port')}
+                margin="normal"
+              />
+            </div>
+          </div>
+
+          {/* Row 3: Username + Password (+ optional BasePath) */}
+          <div style={{ display: 'flex', gap: '16px' }}>
+            {requiresBasePath() && (
+              <div style={{ flex: '1 1 33%' }}>
+                <TextField
+                  label="Basepath"
+                  className={classes.textField}
+                  value={connection.basePath}
+                  onChange={handleChange('basePath')}
+                  margin="normal"
+                />
+              </div>
+            )}
+            <div style={{ flex: '1 1 50%' }}>
+              <TextField
+                label="Username"
+                className={classes.textField}
+                value={connection.username}
+                onChange={handleChange('username')}
+                margin="normal"
+              />
+            </div>
+            <div style={{ flex: '1 1 50%' }}>
+              <TextField
+                label="Password"
+                className={classes.textField}
+                type={showPassword ? 'text' : 'password'}
+                value={connection.password}
+                onChange={handleChange('password')}
+                margin="normal"
+                InputProps={{
+                  endAdornment: <PasswordVisibilityButton showPassword={showPassword} toggle={handleClickShowPassword} />,
+                }}
+              />
+            </div>
+          </div>
+        </div>
         <br />
-        <div>
-          <div style={{ float: 'left' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <Button
               variant="contained"
               className={classes.button}
@@ -253,7 +304,7 @@ function ConnectionSettings(props: Props) {
               <Settings /> Advanced
             </Button>
           </div>
-          <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ButtonGroup variant="contained" color="secondary" className={classes.button}>
               <Button onClick={props.managerActions.saveConnectionSettings}>
                 <Save /> Save
