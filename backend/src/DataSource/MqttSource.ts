@@ -16,6 +16,7 @@ export interface MqttOptions {
   certificateAuthority?: string
   clientCertificate?: string
   clientKey?: string
+  protocolVersion?: 3 | 4 | 5 // MQTT protocol version: 3 = v3.1, 4 = v3.1.1, 5 = v5
 }
 
 export interface Subscription {
@@ -48,6 +49,7 @@ export class MqttSource implements DataSource<MqttOptions> {
     }
 
     const client = mqttConnect(url.toString(), {
+      protocolVersion: options.protocolVersion, // Use configured version, or undefined for auto-negotiation
       resubscribe: false,
       rejectUnauthorized: options.certValidation,
       username: options.username,
@@ -98,10 +100,18 @@ export class MqttSource implements DataSource<MqttOptions> {
 
   public publish(msg: MqttMessage) {
     if (this.client) {
-      this.client.publish(msg.topic, (msg.payload && new Base64Message(msg.payload))?.toBuffer() ?? '', {
+      const protocolVersion = (this.client as any).options?.protocolVersion
+      const options: any = {
         qos: msg.qos,
         retain: msg.retain,
-      })
+      }
+      
+      // Add MQTT v5 properties if present and using v5
+      if (msg.properties && protocolVersion === 5) {
+        options.properties = msg.properties
+      }
+      
+      this.client.publish(msg.topic, (msg.payload && new Base64Message(msg.payload))?.toBuffer() ?? '', options)
     }
   }
 

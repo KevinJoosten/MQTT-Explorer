@@ -1,6 +1,7 @@
 import * as q from '../../../../backend/src/Model'
 import React, { useCallback } from 'react'
-import { Box, Typography, IconButton, Chip, Tooltip, Button } from '@mui/material'
+import { Box, Typography, IconButton, Chip, Tooltip, Button, Accordion, AccordionSummary, AccordionDetails } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Theme } from '@mui/material/styles'
 import { withStyles } from '@mui/styles'
 import { AppState } from '../../reducers'
@@ -33,11 +34,6 @@ function DetailsTab(props: Props) {
   const { node, compareMessage, classes } = props
   const decodeMessage = useDecoder(node)
   const [, forceUpdate] = React.useReducer(x => x + 1, 0)
-
-  // DEBUG LOGGING
-  console.log('=== DetailsTab Render ===')
-  console.log('Topic:', node?.path() || 'none')
-  console.log('compareMessage from Redux:', compareMessage ? 'SET' : 'undefined')
 
   // Subscribe to message updates to force re-render when new messages arrive
   // BUT only when not comparing - comparison should be static
@@ -161,6 +157,47 @@ function DetailsTab(props: Props) {
               />
             </Box>
           </Box>
+
+          {/* MQTT v5 Properties */}
+          {node.message?.properties && Object.keys(node.message.properties).length > 0 && (
+            <Accordion defaultExpanded={false} className={classes.propertiesAccordion}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="caption" color="textSecondary" className={classes.userPropertiesTitle}>
+                  MQTT v5 Properties
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box className={classes.userPropertiesGrid}>
+                {Object.entries(node.message.properties).map(([key, value]: [string, any]) => {
+                  // Skip userProperties if it's an object, handle it separately
+                  if (key === 'userProperties' && typeof value === 'object' && value !== null) {
+                    return Object.entries(value).map(([upKey, upValue]: [string, any]) => (
+                      <Box key={`up-${upKey}`} className={classes.userProperty}>
+                        <Typography variant="caption" className={classes.userPropertyKey}>
+                          {upKey}:
+                        </Typography>
+                        <Typography variant="caption" className={classes.userPropertyValue}>
+                          {String(upValue)}
+                        </Typography>
+                      </Box>
+                    ))
+                  }
+                  // Display other properties
+                  return (
+                    <Box key={key} className={classes.userProperty}>
+                      <Typography variant="caption" className={classes.userPropertyKey}>
+                        {key}:
+                      </Typography>
+                      <Typography variant="caption" className={classes.userPropertyValue}>
+                        {typeof value === 'boolean' ? String(value) : String(value)}
+                      </Typography>
+                    </Box>
+                  )
+                })}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          )}
 
           {/* Action toolbar */}
           <Box className={classes.actionToolbar}>
@@ -381,6 +418,45 @@ const styles = (theme: Theme) => ({
   },
   historySection: {
     marginTop: theme.spacing(1),
+  },
+  // MQTT v5 Properties section
+  propertiesAccordion: {
+    marginTop: theme.spacing(1),
+    backgroundColor: theme.palette.action.hover,
+    '&:before': {
+      display: 'none',
+    },
+  },
+  userPropertiesSection: {
+    marginTop: theme.spacing(1),
+    padding: theme.spacing(1.5),
+    backgroundColor: theme.palette.action.hover,
+    borderRadius: theme.shape.borderRadius,
+  },
+  userPropertiesTitle: {
+    fontWeight: 600,
+    textTransform: 'uppercase' as 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: theme.spacing(1),
+    display: 'block',
+  },
+  userPropertiesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: theme.spacing(1),
+  },
+  userProperty: {
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    flexWrap: 'wrap' as 'wrap',
+  },
+  userPropertyKey: {
+    fontWeight: 600,
+    color: theme.palette.text.secondary,
+  },
+  userPropertyValue: {
+    color: theme.palette.text.primary,
+    wordBreak: 'break-word' as 'break-word',
   },
 })
 

@@ -8,6 +8,7 @@ export interface Message extends MemoryConsumptionExpressedByLength {
   messageId?: number
   retain: boolean
   qos: QoS
+  properties?: any // MQTT v5 properties including userProperties
 
   // meta info
   length: number
