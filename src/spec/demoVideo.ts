@@ -33,7 +33,7 @@ const cleanUp = async (scenes: SceneBuilder, electronApp: ElectronApplication) =
   await electronApp.close()
 }
 
-process.on('unhandledRejection', (error: Error | any) => {
+process.on('unhandledRejection' as any, (error: Error | any) => {
   console.error('unhandledRejection', error.message, error.stack)
   process.exit(1)
 })
@@ -49,7 +49,9 @@ setTimeout(
 const runningUiTestOnCi = os.platform() === 'darwin' ? [] : ['--runningUiTestOnCi']
 
 async function doStuff() {
-  console.log('Waiting for MQTT Broker on port 1880 (no auth)')
+  const brokerHost = process.env.TESTS_MQTT_BROKER_HOST || '127.0.0.1'
+  const brokerPort = process.env.TESTS_MQTT_BROKER_PORT || '1883'
+  console.log(`Waiting for MQTT Broker at ${brokerHost}:${brokerPort} (no auth)`)
   await mockMqtt()
 
   console.log('Starting playwright/electron')
@@ -78,7 +80,7 @@ async function doStuff() {
   })
 
   await scenes.record('connect', async () => {
-    await connectTo('127.0.0.1', page)
+    await connectTo(brokerHost, page)
     await MockSparkplug.run() // Start sparkplug client after connect or birth topics will be missed
     await sleep(1000)
   })
