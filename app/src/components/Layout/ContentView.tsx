@@ -1,13 +1,13 @@
 import * as React from 'react'
-import ReactSplitPaneImport from 'react-split-pane'
-import { connect } from 'react-redux'
-import { List } from 'immutable'
-import { useResizeDetector } from 'react-resize-detector'
 import ChartPanel from '../ChartPanel'
+import ReactSplitPaneImport from 'react-split-pane'
 import Tree from '../Tree'
 import { AppState } from '../../reducers'
 import { ChartParameters } from '../../reducers/Charts'
+import { connect } from 'react-redux'
+import { List } from 'immutable'
 import { Sidebar } from '../Sidebar'
+import { useResizeDetector } from 'react-resize-detector'
 import MobileTabs from './MobileTabs'
 import PublishTab from '../Sidebar/PublishTab'
 
@@ -30,31 +30,34 @@ function ContentView(props: Props) {
   const [sidebarWidth, setSidebarWidth] = React.useState<string | number>(isMobile ? '100%' : '40%')
   const [detectedHeight, setDetectedHeight] = React.useState(0)
   const [detectedSidebarWidth, setDetectedSidebarWidth] = React.useState(0)
-
+  
+  // IMPORTANT: Always call hooks in the same order regardless of mobile/desktop
+  // to avoid "Rendered more hooks than during the previous render" error
+  const { height: resizeHeight, ref: heightRef } = useResizeDetector()
+  const { width: resizeWidth, ref: widthRef } = useResizeDetector()
+  
   // Update mobile state on resize
   React.useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768)
     }
-
+    
     // Set initial state
     handleResize()
-
+    
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-
-  const { height: resizeHeight, ref: heightRef } = useResizeDetector()
-  const { width: resizeWidth, ref: widthRef } = useResizeDetector()
-
+  
+  // Only use resize detector values in desktop mode
   React.useEffect(() => {
-    if (resizeHeight) setDetectedHeight(resizeHeight)
-  }, [resizeHeight])
-
+    if (!isMobile && resizeHeight) setDetectedHeight(resizeHeight)
+  }, [isMobile, resizeHeight])
+  
   React.useEffect(() => {
-    if (resizeWidth) setDetectedSidebarWidth(resizeWidth)
-  }, [resizeWidth])
-
+    if (!isMobile && resizeWidth) setDetectedSidebarWidth(resizeWidth)
+  }, [isMobile, resizeWidth])
+  
   const detectSize = React.useCallback((width: any, newHeight: any) => {
     setDetectedHeight(newHeight)
   }, [])
@@ -92,8 +95,8 @@ function ContentView(props: Props) {
     // Expose tab switching functions for other components to call
     React.useEffect(() => {
       if (typeof window !== 'undefined') {
-        ;(window as any).switchToDetailsTab = () =>
-          (setMobileTab(1)(window as any).switchToTopicsTab = () => setMobileTab(0))
+        (window as any).switchToDetailsTab = () => setMobileTab(1)
+        (window as any).switchToTopicsTab = () => setMobileTab(0)
         ;(window as any).switchToPublishTab = () => setMobileTab(2)
         ;(window as any).switchToChartsTab = () => setMobileTab(3)
       }
@@ -106,19 +109,6 @@ function ContentView(props: Props) {
         }
       }
     }, [])
-
-    // Scroll to selected topic when returning to tree tab
-    React.useEffect(() => {
-      if (mobileTab === 0) {
-        // Delay to ensure DOM is rendered
-        setTimeout(() => {
-          const selectedNode = document.querySelector('.tree .selected')
-          if (selectedNode) {
-            selectedNode.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          }
-        }, 100)
-      }
-    }, [mobileTab])
 
     const mobileContainerStyle: React.CSSProperties = {
       display: 'flex',
@@ -163,22 +153,30 @@ function ContentView(props: Props) {
       <div style={mobileContainerStyle}>
         <MobileTabs value={mobileTab} onChange={setMobileTab} />
         <div style={tabContentStyle}>
-          {/* Topics tab - keep mounted, toggle visibility */}
-          <div style={{ ...treeContainerStyle, display: mobileTab === 0 ? 'block' : 'none' }}>
-            <Tree />
-          </div>
-          {/* Details tab - keep mounted, toggle visibility */}
-          <div style={{ ...sidebarContainerStyle, display: mobileTab === 1 ? 'block' : 'none' }}>
-            <Sidebar connectionId={props.connectionId} />
-          </div>
-          {/* Publish tab - keep mounted, toggle visibility */}
-          <div style={{ ...sidebarContainerStyle, display: mobileTab === 2 ? 'block' : 'none' }}>
-            <PublishTab connectionId={props.connectionId} />
-          </div>
-          {/* Charts tab - keep mounted, toggle visibility */}
-          <div style={{ ...sidebarContainerStyle, display: mobileTab === 3 ? 'block' : 'none' }}>
-            <ChartPanel />
-          </div>
+          {/* Topics tab */}
+          {mobileTab === 0 && (
+            <div style={treeContainerStyle}>
+              <Tree />
+            </div>
+          )}
+          {/* Details tab */}
+          {mobileTab === 1 && (
+            <div style={sidebarContainerStyle}>
+              <Sidebar connectionId={props.connectionId} />
+            </div>
+          )}
+          {/* Publish tab */}
+          {mobileTab === 2 && (
+            <div style={sidebarContainerStyle}>
+              <PublishTab connectionId={props.connectionId} />
+            </div>
+          )}
+          {/* Charts tab */}
+          {mobileTab === 3 && (
+            <div style={sidebarContainerStyle}>
+              <ChartPanel />
+            </div>
+          )}
         </div>
       </div>
     )
@@ -197,7 +195,7 @@ function ContentView(props: Props) {
           size={sidebarWidth}
           onChange={(size: number) => setSidebarWidth(size)}
           onDragFinished={closeSidebarCompletelyIfItSitsOnTheEdge}
-          allowResize
+          allowResize={true}
           style={{ height: '100%' }}
           pane1Style={{ overflowX: 'hidden' }}
           resizerStyle={{ height: '100%' }}
@@ -208,7 +206,7 @@ function ContentView(props: Props) {
               split="horizontal"
               minSize={0}
               size={height}
-              allowResize
+              allowResize={true}
               style={{ height: 'calc(100vh - 64px)' }}
               pane1Style={{ maxHeight: '100%' }}
               pane2Style={{ borderTop: '1px solid #999', display: 'flex' }}
@@ -217,15 +215,7 @@ function ContentView(props: Props) {
             >
               <Tree />
               {/** Passing height constraints via flex options down */}
-              <div
-                ref={heightRef}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  height: '100%',
-                  width: '100%',
-                }}
-              >
+              <div ref={heightRef} style={{ flex: 1, display: 'flex', height: '100%', width: '100%' }}>
                 {/** Resize detector must not be in the scroll zone, it needs to detect actual available size */}
                 <ChartPanel />
               </div>
@@ -234,11 +224,11 @@ function ContentView(props: Props) {
           <div ref={widthRef} style={{ height: '100%' }}>
             <div
               className={props.paneDefaults}
-              style={{
-                minWidth: '250px',
-                height: '100%',
-                overflowY: 'auto',
-                overflowX: 'hidden',
+              style={{ 
+                minWidth: '250px', 
+                height: '100%', 
+                overflowY: 'auto', 
+                overflowX: 'hidden' 
               }}
             >
               <Sidebar connectionId={props.connectionId} />
@@ -250,8 +240,10 @@ function ContentView(props: Props) {
   )
 }
 
-const mapStateToProps = (state: AppState) => ({
-  chartPanelItems: state.charts.get('charts'),
-})
+const mapStateToProps = (state: AppState) => {
+  return {
+    chartPanelItems: state.charts.get('charts'),
+  }
+}
 
 export default connect(mapStateToProps)(ContentView)

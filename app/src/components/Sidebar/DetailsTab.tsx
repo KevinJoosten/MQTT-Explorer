@@ -1,14 +1,12 @@
+import * as q from '../../../../backend/src/Model'
 import React, { useCallback } from 'react'
-import { Box, Typography, IconButton, Chip, Tooltip, Button } from '@mui/material'
+import { Box, Typography, IconButton, Chip, Tooltip, Button, Accordion, AccordionSummary, AccordionDetails } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Theme } from '@mui/material/styles'
 import { withStyles } from '@mui/styles'
+import { AppState } from '../../reducers'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import DeleteIcon from '@mui/icons-material/Delete'
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
-import Info from '@mui/icons-material/Info'
-import * as q from '../../../../backend/src/Model'
-import { AppState } from '../../reducers'
 import { sidebarActions, globalActions } from '../../actions'
 import Copy from '../helper/Copy'
 import Save from '../helper/Save'
@@ -18,6 +16,9 @@ import MessageHistory from './ValueRenderer/MessageHistory'
 import ActionButtons from './ValueRenderer/ActionButtons'
 import DeleteSelectedTopicButton from './ValueRenderer/DeleteSelectedTopicButton'
 import { useDecoder } from '../hooks/useDecoder'
+import DeleteIcon from '@mui/icons-material/Delete'
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
+import Info from '@mui/icons-material/Info'
 import SimpleBreadcrumb from './SimpleBreadcrumb'
 import AIAssistant from './AIAssistant'
 
@@ -25,7 +26,6 @@ interface Props {
   node?: q.TreeNode<any>
   classes: any
   compareMessage?: q.Message
-  connectionId?: string
   sidebarActions: typeof sidebarActions
   globalActions: typeof globalActions
 }
@@ -33,11 +33,29 @@ interface Props {
 function DetailsTab(props: Props) {
   const { node, compareMessage, classes } = props
   const decodeMessage = useDecoder(node)
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0)
 
-  const getDecodedValue = useCallback(
-    () => node?.message && decodeMessage(node.message)?.message?.toUnicodeString(),
-    [node, decodeMessage]
-  )
+  // Subscribe to message updates to force re-render when new messages arrive
+  // BUT only when not comparing - comparison should be static
+  React.useEffect(() => {
+    if (!node || compareMessage) return
+
+    const handleNewMessage = () => {
+      forceUpdate()
+    }
+
+    node.onMessage.subscribe(handleNewMessage)
+    node.onMerge.subscribe(handleNewMessage)
+
+    return () => {
+      node.onMessage.unsubscribe(handleNewMessage)
+      node.onMerge.unsubscribe(handleNewMessage)
+    }
+  }, [node, compareMessage])
+
+  const getDecodedValue = useCallback(() => {
+    return node?.message && decodeMessage(node.message)?.message?.toUnicodeString()
+  }, [node, decodeMessage])
 
   const getData = () => {
     if (node?.message && node.message.payload) {
@@ -72,7 +90,7 @@ function DetailsTab(props: Props) {
         <Typography variant="body2" color="textSecondary" align="center">
           Select a topic to view details
         </Typography>
-
+        
         {/* About Button - always show even when no topic selected */}
         <Box className={classes.aboutSection}>
           <Button
@@ -131,17 +149,67 @@ function DetailsTab(props: Props) {
               {node.message?.retain && (
                 <Chip label="Retained" size="small" variant="outlined" color="primary" className={classes.chip} />
               )}
-              <Chip label={`QoS ${node.message?.qos ?? 0}`} size="small" variant="outlined" className={classes.chip} />
+              <Chip
+                label={`QoS ${node.message?.qos ?? 0}`}
+                size="small"
+                variant="outlined"
+                className={classes.chip}
+              />
             </Box>
           </Box>
+
+          {/* MQTT v5 Properties */}
+          {node.message?.properties && Object.keys(node.message.properties).length > 0 && (
+            <Accordion defaultExpanded={false} className={classes.propertiesAccordion}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="caption" color="textSecondary" className={classes.userPropertiesTitle}>
+                  MQTT v5 Properties
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box className={classes.userPropertiesGrid}>
+                {Object.entries(node.message.properties).map(([key, value]: [string, any]) => {
+                  // Skip userProperties if it's an object, handle it separately
+                  if (key === 'userProperties' && typeof value === 'object' && value !== null) {
+                    return Object.entries(value).map(([upKey, upValue]: [string, any]) => (
+                      <Box key={`up-${upKey}`} className={classes.userProperty}>
+                        <Typography variant="caption" className={classes.userPropertyKey}>
+                          {upKey}:
+                        </Typography>
+                        <Typography variant="caption" className={classes.userPropertyValue}>
+                          {String(upValue)}
+                        </Typography>
+                      </Box>
+                    ))
+                  }
+                  // Display other properties
+                  return (
+                    <Box key={key} className={classes.userProperty}>
+                      <Typography variant="caption" className={classes.userPropertyKey}>
+                        {key}:
+                      </Typography>
+                      <Typography variant="caption" className={classes.userPropertyValue}>
+                        {typeof value === 'boolean' ? String(value) : String(value)}
+                      </Typography>
+                    </Box>
+                  )
+                })}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          )}
 
           {/* Action toolbar */}
           <Box className={classes.actionToolbar}>
             <Typography variant="subtitle2" className={classes.valueTitle}>
               Current Value
             </Typography>
+            {compareMessage && (
+              <Box className={classes.actionButtons}>
+                <ActionButtons />
+              </Box>
+            )}
             <Box className={classes.actionButtons}>
-              <ActionButtons />
             </Box>
             <Box className={classes.valueActions}>
               <Copy getValue={getDecodedValue} />
@@ -195,7 +263,7 @@ function DetailsTab(props: Props) {
       )}
 
       {/* AI Assistant - Always available when a node is selected */}
-      {node && <AIAssistant node={node} connectionId={props.connectionId} />}
+      {node && <AIAssistant node={node} />}
 
       {/* About Section - always visible at bottom */}
       <Box className={classes.aboutSection}>
@@ -216,7 +284,7 @@ function DetailsTab(props: Props) {
 const styles = (theme: Theme) => ({
   root: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column' as 'column',
     gap: theme.spacing(3),
     [theme.breakpoints.down('sm')]: {
       gap: theme.spacing(2),
@@ -224,7 +292,7 @@ const styles = (theme: Theme) => ({
   },
   emptyState: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column' as 'column',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '200px',
@@ -273,7 +341,7 @@ const styles = (theme: Theme) => ({
   },
   statItem: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column' as 'column',
     alignItems: 'center',
     padding: theme.spacing(1.5, 1),
     backgroundColor: theme.palette.action.hover,
@@ -283,7 +351,7 @@ const styles = (theme: Theme) => ({
   statLabel: {
     fontSize: '0.75rem',
     fontWeight: 500,
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase' as 'uppercase',
     letterSpacing: '0.5px',
   },
   statValue: {
@@ -294,7 +362,7 @@ const styles = (theme: Theme) => ({
   // Value section
   valueSection: {
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'column' as 'column',
     gap: theme.spacing(2),
   },
   metadataBar: {
@@ -302,7 +370,7 @@ const styles = (theme: Theme) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: theme.spacing(1),
-    flexWrap: 'wrap' as const,
+    flexWrap: 'wrap' as 'wrap',
     padding: theme.spacing(1),
     backgroundColor: theme.palette.action.hover,
     borderRadius: theme.shape.borderRadius,
@@ -311,7 +379,7 @@ const styles = (theme: Theme) => ({
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
-    flexWrap: 'wrap' as const,
+    flexWrap: 'wrap' as 'wrap',
   },
   metadataRight: {
     display: 'flex',
@@ -325,13 +393,13 @@ const styles = (theme: Theme) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: theme.spacing(1),
-    flexWrap: 'wrap' as const,
+    flexWrap: 'wrap' as 'wrap',
   },
   valueTitle: {
     fontWeight: 600,
     color: theme.palette.text.primary,
     fontSize: '0.875rem',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase' as 'uppercase',
     letterSpacing: '0.5px',
     flexShrink: 0,
   },
@@ -351,15 +419,58 @@ const styles = (theme: Theme) => ({
   historySection: {
     marginTop: theme.spacing(1),
   },
+  // MQTT v5 Properties section
+  propertiesAccordion: {
+    marginTop: theme.spacing(1),
+    backgroundColor: theme.palette.action.hover,
+    '&:before': {
+      display: 'none',
+    },
+  },
+  userPropertiesSection: {
+    marginTop: theme.spacing(1),
+    padding: theme.spacing(1.5),
+    backgroundColor: theme.palette.action.hover,
+    borderRadius: theme.shape.borderRadius,
+  },
+  userPropertiesTitle: {
+    fontWeight: 600,
+    textTransform: 'uppercase' as 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: theme.spacing(1),
+    display: 'block',
+  },
+  userPropertiesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: theme.spacing(1),
+  },
+  userProperty: {
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    flexWrap: 'wrap' as 'wrap',
+  },
+  userPropertyKey: {
+    fontWeight: 600,
+    color: theme.palette.text.secondary,
+  },
+  userPropertyValue: {
+    color: theme.palette.text.primary,
+    wordBreak: 'break-word' as 'break-word',
+  },
 })
 
-const mapStateToProps = (state: AppState) => ({
-  compareMessage: state.sidebar.get('compareMessage'),
-})
+const mapStateToProps = (state: AppState) => {
+  return {
+    compareMessage: state.sidebar.get('compareMessage'),
+  }
+}
 
-const mapDispatchToProps = (dispatch: any) => ({
-  sidebarActions: bindActionCreators(sidebarActions, dispatch),
-  globalActions: bindActionCreators(globalActions, dispatch),
-})
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    sidebarActions: bindActionCreators(sidebarActions, dispatch),
+    globalActions: bindActionCreators(globalActions, dispatch),
+  }
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)(DetailsTab))

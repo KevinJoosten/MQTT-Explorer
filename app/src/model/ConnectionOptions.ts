@@ -27,6 +27,7 @@ export interface ConnectionOptions {
   clientKey?: CertificateParameters
   clientId?: string
   subscriptions: Array<Subscription>
+  protocolVersion?: 3 | 4 | 5 // MQTT protocol version
 }
 
 export function toMqttConnection(options: ConnectionOptions): MqttOptions | undefined {
@@ -45,6 +46,7 @@ export function toMqttConnection(options: ConnectionOptions): MqttOptions | unde
     certificateAuthority: options.selfSignedCertificate ? options.selfSignedCertificate.data : undefined,
     clientCertificate: options.clientCertificate ? options.clientCertificate.data : undefined,
     clientKey: options.clientKey ? options.clientKey.data : undefined,
+    protocolVersion: options.protocolVersion,
   }
 }
 

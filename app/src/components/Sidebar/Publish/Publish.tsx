@@ -1,6 +1,7 @@
 import { AttachFileOutlined, FormatAlignLeft } from '@mui/icons-material'
 import Navigation from '@mui/icons-material/Navigation'
 import React, { useCallback, useMemo, useState, useRef, memo } from 'react'
+import UserProperties from './UserProperties'
 import { bindActionCreators } from 'redux'
 import { Button, Fab, Tooltip } from '@mui/material'
 import { connect } from 'react-redux'
@@ -23,6 +24,8 @@ interface Props {
   globalActions: typeof globalActions
   retain: boolean
   editorMode: string
+  userProperties: Array<{ key: string; value: string }>
+  protocolVersion?: number
 }
 
 function useHistory(): [Array<Message>, (topic: string, payload?: string) => void] {
@@ -93,11 +96,17 @@ function Publish(props: Props) {
             editorRef={editorRef as any}
           />
           <RetainSwitch />
+          {props.protocolVersion === 5 && (
+            <UserProperties
+              userProperties={props.userProperties}
+              onChange={props.actions.setUserProperties}
+            />
+          )}
         </div>
         <PublishHistory history={history} />
       </div>
     ),
-    [props.payload, props.editorMode, history, handleSubmit, publish]
+    [props.payload, props.editorMode, props.userProperties, history, handleSubmit, publish]
   )
 }
 
@@ -207,11 +216,27 @@ const mapDispatchToProps = (dispatch: any) => ({
   globalActions: bindActionCreators(globalActions, dispatch),
 })
 
+<<<<<<< HEAD
 const mapStateToProps = (state: AppState) => ({
   topic: state.publish.manualTopic,
   payload: state.publish.payload,
   editorMode: state.publish.editorMode,
   retain: state.publish.retain,
 })
+=======
+const mapStateToProps = (state: AppState) => {
+  const connectionId = state.connection.connectionId
+  const connection = connectionId ? state.connectionManager.connections[connectionId] : undefined
+  
+  return {
+    topic: state.publish.manualTopic,
+    payload: state.publish.payload,
+    editorMode: state.publish.editorMode,
+    retain: state.publish.retain,
+    userProperties: state.publish.userProperties,
+    protocolVersion: connection?.protocolVersion,
+  }
+}
+>>>>>>> 212630d (feat: Add MQTT v5 user properties support)
 
 export default connect(mapStateToProps, mapDispatchToProps)(Publish)
