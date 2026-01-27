@@ -7,9 +7,10 @@ import { makeOpenDialogRpc } from '../../../events/OpenDialogRequest'
 import { showError } from './Global'
 import { Base64 } from 'js-base64'
 
-export const setTopic = (topic?: string): Action => {
+export const setTopic = (topic?: string, isManualEdit?: boolean): Action => {
   return {
     topic,
+    isManualEdit,
     type: ActionTypes.PUBLISH_SET_TOPIC,
   }
 }

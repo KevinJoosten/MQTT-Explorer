@@ -10,11 +10,11 @@ function TopicInput(props: { actions: typeof publishActions; manualTopic?: strin
   const inputElement = useRef<HTMLInputElement>(null)
 
   const updateTopic = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    props.actions.setTopic(e.target.value)
+    props.actions.setTopic(e.target.value, true)
   }, [])
 
   const clearTopic = useCallback(() => {
-    props.actions.setTopic('')
+    props.actions.setTopic('', true)
     inputElement.current?.focus()
   }, [])
 

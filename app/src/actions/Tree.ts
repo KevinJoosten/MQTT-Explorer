@@ -12,48 +12,64 @@ export { clearTopic } from './clearTopic'
 
 export { moveSelectionUpOrDownwards, moveInward, moveOutward } from './visibleTreeTraversal'
 
-export const selectTopic =
-  (topic: q.TreeNode<TopicViewModel>) => (dispatch: Dispatch<any>, getState: () => AppState) => {
-    debouncedSelectTopic(topic, dispatch, getState)
+const performTopicSelection = (
+  topic: q.TreeNode<TopicViewModel>, 
+  dispatch: Dispatch<any>, 
+  getState: () => AppState, 
+  isClickSelection: boolean = false
+) => {
+  const previouslySelectedTopic = getState().tree.get('selectedTopic')
+
+  if (previouslySelectedTopic === topic) {
+    return
   }
 
-const debouncedSelectTopic = debounce(
-  (topic: q.TreeNode<TopicViewModel>, dispatch: Dispatch<any>, getState: () => AppState) => {
-    const previouslySelectedTopic = getState().tree.get('selectedTopic')
-
-    if (previouslySelectedTopic === topic) {
-      return
-    }
-
-    // Update publish topic
-    let setTopicDispatch: any | undefined
+  // Update publish topic
+  // Clicks always update and unlock, hovers respect the lock
+  let setTopicDispatch: any | undefined
+  if (isClickSelection) {
+    // Direct click: always update and unlock (isManualEdit=false unlocks)
+    setTopicDispatch = setTopic(topic.path(), false)
+  } else if (!getState().publish.topicLocked) {
+    // Hover with Quick Preview: only update if not locked
     if (!getState().publish.manualTopic) {
       setTopicDispatch = setTopic(topic.path())
     } else if (previouslySelectedTopic && previouslySelectedTopic.path() === getState().publish.manualTopic) {
       setTopicDispatch = setTopic(topic.path())
     }
+  }
 
-    previouslySelectedTopic?.viewModel?.setSelected(false)
-    topic.viewModel?.setSelected(true)
+  previouslySelectedTopic?.viewModel?.setSelected(false)
+  topic.viewModel?.setSelected(true)
 
-    const selectTreeTopicDispatch = {
-      selectedTopic: topic,
-      type: ActionTypes.TREE_SELECT_TOPIC,
-    }
+  const selectTreeTopicDispatch = {
+    selectedTopic: topic,
+    type: ActionTypes.TREE_SELECT_TOPIC,
+  }
 
-    dispatch({
-      type: SidebarActionTypes.SIDEBAR_SET_COMPARE_MESSAGE,
-      message: undefined,
-    })
+  dispatch({
+    type: SidebarActionTypes.SIDEBAR_SET_COMPARE_MESSAGE,
+    message: undefined,
+  })
 
-    if (setTopicDispatch) {
-      dispatch(batchActions([selectTreeTopicDispatch, setTopicDispatch]))
+  if (setTopicDispatch) {
+    dispatch(batchActions([selectTreeTopicDispatch, setTopicDispatch]))
+  } else {
+    dispatch(selectTreeTopicDispatch)
+  }
+}
+
+const debouncedSelectTopic = debounce(performTopicSelection, 70)
+
+export const selectTopic =
+  (topic: q.TreeNode<TopicViewModel>, isClickSelection: boolean = false) => (dispatch: Dispatch<any>, getState: () => AppState) => {
+    // Skip debounce for click selections to ensure immediate unlock
+    if (isClickSelection) {
+      performTopicSelection(topic, dispatch, getState, isClickSelection)
     } else {
-      dispatch(selectTreeTopicDispatch)
+      debouncedSelectTopic(topic, dispatch, getState, isClickSelection)
     }
-  },
-  70
-)
+  }
 
 function destroyUnreferencedTree(state: AppState) {
   const visibleTree = state.tree.get('tree')

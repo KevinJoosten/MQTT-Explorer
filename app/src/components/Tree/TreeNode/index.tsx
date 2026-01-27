@@ -21,7 +21,7 @@ export interface Props {
   classes: any
   lastUpdate: number
   actions: typeof treeActions
-  selectTopicAction: (treeNode: q.TreeNode<any>) => void
+  selectTopicAction: typeof treeActions.selectTopic
   theme: Theme
   settings: SettingsState
 }
@@ -50,9 +50,9 @@ function TreeNodeComponent(props: Props) {
     Boolean(collapsedOverride) === collapsedOverride ? Boolean(collapsedOverride) : !isAllowedToAutoExpand
 
   const didSelectTopic = useCallback(
-    (event?: React.MouseEvent) => {
+    (event?: React.MouseEvent, isClickSelection: boolean = false) => {
       event && event.stopPropagation()
-      props.selectTopicAction(treeNode)
+      props.selectTopicAction(treeNode, isClickSelection)
     },
     [treeNode]
   )
@@ -60,7 +60,7 @@ function TreeNodeComponent(props: Props) {
   const didClickTitle = React.useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation()
-      didSelectTopic()
+      didSelectTopic(event, true)
       setCollapsedOverride(!isCollapsed)
     },
     [isCollapsed, didSelectTopic]
@@ -75,7 +75,7 @@ function TreeNodeComponent(props: Props) {
   )
 
   const didObtainFocus = useCallback(() => {
-    didSelectTopic()
+    didSelectTopic(undefined, true)
   }, [didSelectTopic])
 
   const mouseOver = useCallback(

@@ -6,6 +6,7 @@ export interface PublishState {
   retain: boolean
   editorMode: string
   qos: 0 | 1 | 2
+  topicLocked: boolean
 }
 
 export type Action = SetPayload | SetTopic | ToggleRetain | SetEditorMode | SetQoS
@@ -26,6 +27,7 @@ export interface SetPayload {
 export interface SetTopic {
   type: ActionTypes.PUBLISH_SET_TOPIC
   topic?: string
+  isManualEdit?: boolean
 }
 
 export interface SetQoS {
@@ -46,6 +48,7 @@ const initialState: PublishState = {
   editorMode: 'json',
   retain: false,
   qos: 0,
+  topicLocked: false,
 }
 
 export const publishReducer = createReducer(initialState, {
@@ -57,9 +60,20 @@ export const publishReducer = createReducer(initialState, {
 })
 
 function setTopic(state: PublishState, action: SetTopic) {
+  // Lock logic:
+  // - isManualEdit=true: Lock (user typed)
+  // - isManualEdit=false: Unlock (explicit click/selection)
+  // - isManualEdit=undefined: Keep current lock state (hover/programmatic)
+  const newLockState = action.isManualEdit === true 
+    ? true 
+    : action.isManualEdit === false 
+      ? false 
+      : state.topicLocked
+
   return {
     ...state,
     manualTopic: action.topic,
+    topicLocked: newLockState,
   }
 }
 

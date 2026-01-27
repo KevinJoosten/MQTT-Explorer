@@ -13,7 +13,7 @@ export interface Props {
   classes: any
   lastUpdate: number
   selectedTopic?: q.TreeNode<TopicViewModel>
-  selectTopicAction: (treeNode: q.TreeNode<any>) => void
+  selectTopicAction: typeof treeActions.selectTopic
   settings: SettingsState
   actions: typeof treeActions
   theme: Theme
