@@ -92,13 +92,10 @@ function renderRawMode(
   classes?: any
 ) {
   // When no comparison is active, just show the raw current value without diff UI
-  console.log('renderRawMode - compareStr:', compareStr ? 'HAS VALUE' : 'undefined')
   if (!compareStr) {
-    console.log('→ Rendering simple code (no comparison)')
     return renderSimpleCode(currentStr, currentType, classes)
   }
   
-  console.log('→ Rendering with comparison UI')
   // When comparing, show both current and selected messages with diff UI
   return (
     <div>
@@ -125,27 +122,15 @@ export const ValueRenderer: React.FC<Props> = ({ treeNode, compareWith: compare,
   // Force raw mode when not comparing - diff mode only makes sense when comparing
   const effectiveRenderMode = compareMessage ? renderMode : 'raw'
 
-  // DEBUG LOGGING
-  console.log('=== ValueRenderer Debug ===')
-  console.log('Topic path:', treeNode.path())
-  console.log('renderMode:', renderMode, '→ effective:', effectiveRenderMode)
-  console.log('compareWith prop:', compare ? 'SET' : 'undefined')
-  console.log('compareMessage:', compareMessage ? 'SET' : 'undefined')
-  console.log('previousMessage:', previousMessage ? 'EXISTS' : 'undefined')
-  console.log('Message history length:', previousMessages.length)
-
   const [currentStr, currentType] = useMemo(
     () => decodedMessage?.message?.format(treeNode.type) ?? [],
     [decodedMessage, treeNode.type]
   )
   const [compareStr, compareType] = useMemo(
     () => {
-      const result = compareMessage ? decodeMessage(compareMessage)?.message?.format(treeNode.type) ?? [] : [undefined, undefined]
-      console.log('compareStr:', result[0] ? `"${result[0].substring(0, 50)}..."` : 'undefined')
-      console.log('currentStr:', currentStr ? `"${currentStr.substring(0, 50)}..."` : 'undefined')
-      return result
+      return compareMessage ? decodeMessage(compareMessage)?.message?.format(treeNode.type) ?? [] : [undefined, undefined]
     },
-    [compareMessage, decodeMessage, treeNode.type, currentStr]
+    [compareMessage, decodeMessage, treeNode.type]
   )
 
   function renderValue(

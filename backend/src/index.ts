@@ -60,6 +60,7 @@ export class ConnectionManager {
         qos: packet.qos,
         retain: packet.retain,
         messageId: packet.messageId,
+        properties: packet.properties, // MQTT v5 properties
       })
     })
   }
