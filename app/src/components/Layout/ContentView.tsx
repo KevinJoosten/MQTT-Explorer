@@ -79,36 +79,41 @@ function ContentView(props: Props) {
   }, [detectedSidebarWidth])
 
   // Open chart panel on start and when a new chart is added but the panel is closed
+  // Always called regardless of mobile/desktop to maintain hook order
   React.useEffect(() => {
-    const almostClosed = !isNaN(height as any) && detectedHeight < 30
-    if ((!height || height === '100%' || almostClosed) && props.chartPanelItems.count() > 0) {
-      setHeight('calc(100% - 250px)')
-    }
+    if (!isMobile) {
+      const almostClosed = !isNaN(height as any) && detectedHeight < 30
+      if ((!height || height === '100%' || almostClosed) && props.chartPanelItems.count() > 0) {
+        setHeight('calc(100% - 250px)')
+      }
 
-    if (props.chartPanelItems.count() === 0) {
-      setHeight('100%')
+      if (props.chartPanelItems.count() === 0) {
+        setHeight('100%')
+      }
     }
-  }, [props.chartPanelItems])
+  }, [isMobile, height, detectedHeight, props.chartPanelItems])
+
+  // Expose tab switching functions for mobile mode
+  // Always called regardless of mobile/desktop to maintain hook order
+  React.useEffect(() => {
+    if (isMobile && typeof window !== 'undefined') {
+      (window as any).switchToDetailsTab = () => setMobileTab(1)
+      (window as any).switchToTopicsTab = () => setMobileTab(0)
+      ;(window as any).switchToPublishTab = () => setMobileTab(2)
+      ;(window as any).switchToChartsTab = () => setMobileTab(3)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).switchToDetailsTab
+        delete (window as any).switchToTopicsTab
+        delete (window as any).switchToPublishTab
+        delete (window as any).switchToChartsTab
+      }
+    }
+  }, [isMobile])
 
   // Mobile view with tab switcher
   if (isMobile) {
-    // Expose tab switching functions for other components to call
-    React.useEffect(() => {
-      if (typeof window !== 'undefined') {
-        (window as any).switchToDetailsTab = () => setMobileTab(1)
-        (window as any).switchToTopicsTab = () => setMobileTab(0)
-        ;(window as any).switchToPublishTab = () => setMobileTab(2)
-        ;(window as any).switchToChartsTab = () => setMobileTab(3)
-      }
-      return () => {
-        if (typeof window !== 'undefined') {
-          delete (window as any).switchToDetailsTab
-          delete (window as any).switchToTopicsTab
-          delete (window as any).switchToPublishTab
-          delete (window as any).switchToChartsTab
-        }
-      }
-    }, [])
 
     const mobileContainerStyle: React.CSSProperties = {
       display: 'flex',
