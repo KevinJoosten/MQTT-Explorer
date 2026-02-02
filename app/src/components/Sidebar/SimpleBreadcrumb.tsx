@@ -38,7 +38,7 @@ function SimpleBreadcrumb(props: Props) {
           {index > 0 && <span className={classes.separator}> / </span>}
           <Link
             component="button"
-            variant="h6"
+            variant="body1"
             className={classes.breadcrumbLink}
             onClick={() => actions.selectTopic(item.target)}
             underline="hover"
@@ -59,7 +59,7 @@ const styles = (theme: Theme) => ({
     gap: 0,
   },
   breadcrumbLink: {
-    fontSize: '1rem',
+    fontSize: '0.875rem',
     fontWeight: 500,
     color: theme.palette.text.primary,
     cursor: 'pointer',

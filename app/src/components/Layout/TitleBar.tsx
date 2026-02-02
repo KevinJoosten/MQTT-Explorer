@@ -40,14 +40,12 @@ const styles = (theme: Theme) => ({
     marginRight: 20,
   },
   disconnect: {
-    margin: 'auto 8px auto auto',
     // Hide on mobile (<=768px)
     [theme.breakpoints.down('md')]: {
       display: 'none' as const,
     },
   },
   logout: {
-    margin: 'auto 0 auto 8px',
     // Hide on mobile (<=768px)
     [theme.breakpoints.down('md')]: {
       display: 'none' as const,
@@ -109,16 +107,18 @@ class TitleBar extends React.PureComponent<Props, {}> {
           </Typography>
           <SearchBar />
           <PauseButton />
-          <Button
-            className={classes.disconnect}
-            sx={{ color: 'primary.contrastText' }}
-            onClick={actions.connection.disconnect}
-            data-testid="disconnect-button"
-          >
-            Disconnect <CloudOff className={classes.disconnectIcon} />
-          </Button>
-          <LogoutButton classes={classes} onLogout={this.handleLogout} />
-          <ConnectionHealthIndicatorAny withBackground />
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Button
+              className={classes.disconnect}
+              sx={{ color: 'primary.contrastText' }}
+              onClick={actions.connection.disconnect}
+              data-testid="disconnect-button"
+            >
+              Disconnect <CloudOff className={classes.disconnectIcon} />
+            </Button>
+            <LogoutButton classes={classes} onLogout={this.handleLogout} />
+            <ConnectionHealthIndicatorAny withBackground={true} />
+          </div>
         </Toolbar>
       </AppBar>
     )
