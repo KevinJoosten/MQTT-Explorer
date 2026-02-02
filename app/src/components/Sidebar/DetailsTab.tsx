@@ -146,7 +146,7 @@ function DetailsTab(props: Props) {
               </Typography>
             </Box>
             <Box className={classes.metadataRight}>
-              {node.message?.retain && (
+              {node.message?.retain === true && (
                 <Chip label="Retained" size="small" variant="outlined" color="primary" className={classes.chip} />
               )}
               <Chip

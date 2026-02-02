@@ -55,6 +55,7 @@ export class MqttSource implements DataSource<MqttOptions> {
       username: options.username,
       password: options.password,
       clientId: options.clientId,
+      keepalive: 60, // Send PINGREQ every 60 seconds to keep connection alive
       servername: options.tls ? url.hostname : undefined,
       ca: options.certificateAuthority ? Buffer.from(options.certificateAuthority, 'base64') : undefined,
       cert: options.clientCertificate ? Buffer.from(options.clientCertificate, 'base64') : undefined,
