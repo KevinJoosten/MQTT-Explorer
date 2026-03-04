@@ -24,6 +24,10 @@ const storedConnectionsIdentifier: StorageIdentifier<ConnectionDictionary> = {
   id: 'ConnectionManager_connections',
 }
 
+const lastSelectedConnectionIdentifier: StorageIdentifier<string> = {
+  id: 'ConnectionManager_lastSelected',
+}
+
 export const loadConnectionSettings = () => async (dispatch: Dispatch<any>, getState: () => AppState) => {
   let connections
   try {
@@ -44,13 +48,24 @@ export const loadConnectionSettings = () => async (dispatch: Dispatch<any>, getS
   }
 
   dispatch(setConnections(connections))
-  const firstKey = Object.keys(connections)[0]
-  if (firstKey) {
-    dispatch(selectConnection(firstKey))
-  } else {
+  const connectionIds = Object.keys(connections)
+  if (connectionIds.length === 0) {
     // No connections exist - create a default one
     dispatch(createConnection())
+    return
   }
+
+  // Restore the last selected connection, falling back to the first
+  let idToSelect = connectionIds[0]
+  try {
+    const lastSelected = await persistentStorage.load(lastSelectedConnectionIdentifier)
+    if (lastSelected && connections[lastSelected]) {
+      idToSelect = lastSelected
+    }
+  } catch {
+    // ignore – fall back to first connection
+  }
+  dispatch(selectConnection(idToSelect))
 }
 
 export type CertificateTypes = 'selfSignedCertificate' | 'clientCertificate' | 'clientKey'
@@ -164,10 +179,15 @@ export const setConnections = (connections: { [s: string]: ConnectionOptions }):
   type: ActionTypes.CONNECTION_MANAGER_SET_CONNECTIONS,
 })
 
-export const selectConnection = (connectionId: string): Action => ({
+const selectConnectionAction = (connectionId: string): Action => ({
   selected: connectionId,
   type: ActionTypes.CONNECTION_MANAGER_SELECT_CONNECTION,
 })
+
+export const selectConnection = (connectionId: string) => (dispatch: Dispatch<any>) => {
+  persistentStorage.store(lastSelectedConnectionIdentifier, connectionId).catch(() => {/* ignore */})
+  dispatch(selectConnectionAction(connectionId))
+}
 
 export const addConnection = (connection: ConnectionOptions): Action => ({
   connection,
