@@ -85,12 +85,17 @@ async function openCertificate(): Promise<CertificateParameters> {
   }
 
   const data = await rendererRpc.call(readFromFile, { filePath: selectedFile })
-  if (data.length > 16_384 || data.length < 64) {
+  // Electron IPC deserializes Buffers as Uint8Array in the renderer process.
+  // Buffer.from() normalises either type before calling .toString('base64').
+  // Without this, Uint8Array.toString('base64') ignores the argument and returns
+  // comma-separated decimal bytes, producing garbage that causes NO_START_LINE.
+  const buf = Buffer.from(data as any)
+  if (buf.length > 16_384 || buf.length < 64) {
     throw rejectReasons.certificateSizeDoesNotMatch
   }
 
   return {
-    data: data.toString('base64'),
+    data: buf.toString('base64'),
     name: path.basename(selectedFile),
   }
 }

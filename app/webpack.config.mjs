@@ -1,6 +1,5 @@
 // import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import webpack from 'webpack'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
@@ -91,9 +90,6 @@ export default {
   },
   plugins: [
     new HtmlWebpackPlugin({ template: './index.html', file: './build/index.html', inject: false }),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    }),
   ],
   externals: {},
   cache: {
