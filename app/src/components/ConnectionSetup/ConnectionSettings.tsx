@@ -18,6 +18,7 @@ import { withStyles } from '@mui/styles'
 import { ToggleSwitch } from './ToggleSwitch'
 import { useGlobalKeyEventHandler } from '../../effects/useGlobalKeyEventHandler'
 import {
+  Box,
   Button,
   ButtonGroup,
   FormControl,
@@ -135,19 +136,21 @@ function ConnectionSettings(props: Props) {
     const { classes, connection } = props
 
     return (
-      <TextField
-        select={true}
-        label="MQTT Version"
-        className={classes.textField}
-        value={connection.protocolVersion || 'auto'}
-        onChange={handleChange('protocolVersion')}
-        margin="normal"
-      >
-        <MenuItem value="auto">Auto</MenuItem>
-        <MenuItem value={5}>v5.0</MenuItem>
-        <MenuItem value={4}>v3.1.1</MenuItem>
-        <MenuItem value={3}>v3.1</MenuItem>
-      </TextField>
+      <Box data-testid="mqtt-version-wrapper">
+        <TextField
+          select={true}
+          label="MQTT Version"
+          className={classes.textField}
+          value={connection.protocolVersion || 'auto'}
+          onChange={handleChange('protocolVersion')}
+          margin="normal"
+        >
+          <MenuItem value="auto">Auto</MenuItem>
+          <MenuItem value={5}>v5.0</MenuItem>
+          <MenuItem value={4}>v3.1.1</MenuItem>
+          <MenuItem value={3}>v3.1</MenuItem>
+        </TextField>
+      </Box>
     )
   }
 

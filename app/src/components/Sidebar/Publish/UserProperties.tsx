@@ -54,6 +54,7 @@ function UserProperties(props: Props) {
           startIcon={<AddIcon />}
           onClick={handleAdd}
           className={classes.addButton}
+          data-testid="user-property-add-button"
         >
           Add Property
         </Button>
@@ -68,6 +69,7 @@ function UserProperties(props: Props) {
             onChange={(e) => handleKeyChange(index, e.target.value)}
             className={classes.keyField}
             variant="outlined"
+            inputProps={{ 'data-testid': `user-property-key-${index}` }}
           />
           <TextField
             size="small"
@@ -76,6 +78,7 @@ function UserProperties(props: Props) {
             onChange={(e) => handleValueChange(index, e.target.value)}
             className={classes.valueField}
             variant="outlined"
+            inputProps={{ 'data-testid': `user-property-value-${index}` }}
           />
           <IconButton
             size="small"

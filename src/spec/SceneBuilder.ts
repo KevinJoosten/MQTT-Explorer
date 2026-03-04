@@ -21,6 +21,7 @@ export type SceneNames =
   | 'customize_subscriptions'
   | 'keyboard_shortcuts'
   | 'sparkplugb-decoding'
+  | 'mqtt_v5_user_properties'
   | 'end'
   | 'mobile_intro'
   | 'mobile_connect'
@@ -46,6 +47,7 @@ export const SCENE_TITLES: Record<SceneNames, string> = {
   customize_subscriptions: 'Customize Subscriptions',
   keyboard_shortcuts: 'Keyboard Shortcuts',
   'sparkplugb-decoding': 'SparkplugB Decoding',
+  mqtt_v5_user_properties: 'MQTT v5 User Properties',
   end: 'The End',
   mobile_intro: 'MQTT Explorer on Mobile',
   mobile_connect: 'Connect to MQTT Broker',

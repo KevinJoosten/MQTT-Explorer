@@ -22,6 +22,7 @@ import { showNumericPlot } from './scenarios/showNumericPlot'
 import { showOffDiffCapability } from './scenarios/showOffDiffCapability'
 import { showZoomLevel } from './scenarios/showZoomLevel'
 import { showSparkPlugDecoding } from './scenarios/showSparkplugDecoding'
+import { showMqttV5UserProperties } from './scenarios/showMqttV5UserProperties'
 
 /**
  *  A convenience method that handles gracefully cleaning up the test run.
@@ -126,6 +127,13 @@ async function doStuff() {
   await scenes.record('sparkplugb-decoding', async () => {
     await showText('SparkplugB Decoding', 2000, page, 'top')
     await showSparkPlugDecoding(page)
+  })
+
+  await scenes.record('mqtt_v5_user_properties', async () => {
+    await showText('MQTT v5 User Properties', 2000, page, 'top')
+    await sleep(500)
+    await showMqttV5UserProperties(page)
+    await hideText(page)
   })
 
   // disable this scenario for now until expandTopic is sorted out
