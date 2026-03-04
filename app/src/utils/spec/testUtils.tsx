@@ -11,6 +11,7 @@
 import React from 'react'
 import { render, RenderOptions, RenderResult } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider as LegacyThemeProvider } from '@mui/styles'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 
@@ -37,7 +38,7 @@ export function mockResizeObserver() {
     global.ResizeObserver = MockResizeObserver
   }
   if (typeof window !== 'undefined' && typeof window.ResizeObserver === 'undefined') {
-    ;(window as any).ResizeObserver = MockResizeObserver
+    (window as any).ResizeObserver = MockResizeObserver
   }
 }
 
@@ -68,8 +69,7 @@ const defaultTheme = createTheme({
 /**
  * Default Redux store for testing
  */
-const createTestStore = (initialState = {}) =>
-  configureStore({
+const createTestStore = (initialState = {}) => configureStore({
     reducer: {
       // Add minimal reducers as needed
       charts: (state = { charts: [] }) => state,
@@ -111,7 +111,7 @@ export function renderWithProviders(
     withTheme = true,
     withRedux = false,
     ...renderOptions
-  }: CustomRenderOptions = {}
+  }: CustomRenderOptions = {},
 ): RenderResult {
   let Wrapper: React.FC<{ children: React.ReactNode }>
 
@@ -119,7 +119,9 @@ export function renderWithProviders(
     Wrapper = function ({ children }) {
       return (
         <Provider store={store}>
-          <ThemeProvider theme={theme}>{children}</ThemeProvider>
+          <ThemeProvider theme={theme}>
+            <LegacyThemeProvider theme={theme}>{children}</LegacyThemeProvider>
+          </ThemeProvider>
         </Provider>
       )
     }
@@ -129,7 +131,11 @@ export function renderWithProviders(
     }
   } else if (withTheme) {
     Wrapper = function ({ children }) {
-      return <ThemeProvider theme={theme}>{children}</ThemeProvider>
+      return (
+        <ThemeProvider theme={theme}>
+          <LegacyThemeProvider theme={theme}>{children}</LegacyThemeProvider>
+        </ThemeProvider>
+      )
     }
   } else {
     Wrapper = function ({ children }) {
@@ -154,7 +160,7 @@ export function createMockChartData(count: number = 10): Array<{ x: number; y: n
 /**
  * Helper to wait for async operations
  */
-export const waitFor = async (ms: number = 100) => new Promise(resolve => setTimeout(resolve, ms))
+export const waitFor = async (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * Re-export everything from @testing-library/react for convenience
