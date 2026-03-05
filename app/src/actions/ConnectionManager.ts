@@ -39,6 +39,12 @@ export const loadConnectionSettings = () => async (dispatch: Dispatch<any>, getS
       connections = connectionsMigrator.applyMigrations(connections)
       await persistentStorage.store(storedConnectionsIdentifier, connections)
     }
+
+    // Heal any cert data that was stored as comma-separated decimal bytes
+    // (caused by Uint8Array.toString('base64') ignoring the encoding arg in old builds)
+    if (connections && repairCorruptCertData(connections)) {
+      await persistentStorage.store(storedConnectionsIdentifier, connections)
+    }
   } catch (error) {
     dispatch(showError(error))
   }
@@ -290,4 +296,34 @@ async function ensureConnectionsHaveBeenInitialized() {
 
     clearLegacyConnectionOptions()
   }
+}
+
+/**
+ * Detects and repairs cert data that was stored as comma-separated decimal bytes
+ * instead of base64 due to Uint8Array.toString('base64') ignoring the encoding arg
+ * in Electron IPC deserialization before the Buffer.from() fix was applied.
+ * Returns true if any fields were repaired (so the caller can persist the fix).
+ */
+function repairCorruptCertData(connections: ConnectionDictionary): boolean {
+  const certFields: CertificateTypes[] = ['selfSignedCertificate', 'clientCertificate', 'clientKey']
+  let repaired = false
+  Object.values(connections).forEach((conn: any) => {
+    certFields.forEach(field => {
+      const cert = conn[field]
+      if (!cert || !cert.data) return
+      const decoded = Buffer.from(cert.data, 'base64').toString('utf8')
+      if (!decoded.startsWith('-----BEGIN')) {
+        // Looks like comma-separated decimal bytes — convert back
+        try {
+          const bytes = cert.data.split(',').map(Number)
+          if (bytes.some(isNaN)) return
+          cert.data = Buffer.from(bytes).toString('base64')
+          repaired = true
+        } catch {
+          // leave as-is if conversion fails
+        }
+      }
+    })
+  })
+  return repaired
 }
