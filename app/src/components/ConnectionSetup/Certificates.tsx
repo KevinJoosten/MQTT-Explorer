@@ -2,8 +2,9 @@ import * as React from 'react'
 import CertificateFileSelection from './CertificateFileSelection'
 import BrowserCertificateFileSelection from './BrowserCertificateFileSelection'
 import Undo from '@mui/icons-material/Undo'
+import Archive from '@mui/icons-material/Archive'
 import { bindActionCreators } from 'redux'
-import { Button, Grid } from '@mui/material'
+import { Button, Divider, Stack, Tooltip, Typography } from '@mui/material'
 import { connect } from 'react-redux'
 import { connectionManagerActions } from '../../actions'
 import { ConnectionOptions } from '../../model/ConnectionOptions'
@@ -45,48 +46,77 @@ class Certificates extends React.PureComponent<Props, State> {
   }
 
   public render() {
-    const { classes } = this.props
+    const { classes, connection } = this.props
     return (
-      <div>
-        <form noValidate={true} autoComplete="off">
-          <Grid container={true} spacing={3}>
-            <Grid item={true} xs={12} className={classes.gridPadding}>
-              <CertSelector
-                connection={this.props.connection}
-                certificate={this.props.connection.selfSignedCertificate}
-                title="Server Certificate (CA)"
-                certificateType="selfSignedCertificate"
-              />
-            </Grid>
-            <Grid item={true} xs={12} className={classes.gridPadding}>
-              <CertSelector
-                connection={this.props.connection}
-                certificate={this.props.connection.clientCertificate}
-                title="Client Certificate"
-                certificateType="clientCertificate"
-              />
-            </Grid>
-            <Grid item={true} xs={12} className={classes.gridPadding}>
-              <CertSelector
-                connection={this.props.connection}
-                certificate={this.props.connection.clientKey}
-                title="Client Key"
-                certificateType="clientKey"
-              />
-            </Grid>
-            <Grid item={true} xs={2} className={classes.gridPadding}>
-              <br />
-              <Button
-                variant="contained"
-                className={classes.button}
-                onClick={this.props.managerActions.toggleCertificateSettings}
+      <form noValidate={true} autoComplete="off" className={classes.container}>
+        <Stack spacing={2}>
+          {!isBrowserMode && (
+            <div>
+              <Tooltip
+                title="Select a .zip containing the CA, client certificate and client key"
+                placement="top"
               >
-                <Undo /> Back
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      </div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Archive />}
+                  className={classes.actionButton}
+                  onClick={() => this.props.managerActions.selectCertificateBundle(connection.id)}
+                >
+                  Import bundle (.zip)
+                </Button>
+              </Tooltip>
+              <Typography variant="caption" display="block" className={classes.hint}>
+                Fills in the CA, client certificate and client key from a single zip archive.
+              </Typography>
+            </div>
+          )}
+
+          {!isBrowserMode && (
+            <Divider textAlign="left" className={classes.divider}>
+              <Typography variant="caption" color="textSecondary">
+                or select files individually
+              </Typography>
+            </Divider>
+          )}
+
+          <div className={classes.certRow}>
+            <CertSelector
+              connection={connection}
+              certificate={connection.selfSignedCertificate}
+              title="Server Certificate (CA)"
+              certificateType="selfSignedCertificate"
+            />
+          </div>
+          <div className={classes.certRow}>
+            <CertSelector
+              connection={connection}
+              certificate={connection.clientCertificate}
+              title="Client Certificate"
+              certificateType="clientCertificate"
+            />
+          </div>
+          <div className={classes.certRow}>
+            <CertSelector
+              connection={connection}
+              certificate={connection.clientKey}
+              title="Client Key"
+              certificateType="clientKey"
+            />
+          </div>
+
+          <Divider />
+          <div>
+            <Button
+              variant="outlined"
+              startIcon={<Undo />}
+              onClick={this.props.managerActions.toggleCertificateSettings}
+            >
+              Back
+            </Button>
+          </div>
+        </Stack>
+      </form>
     )
   }
 }
@@ -98,15 +128,29 @@ const mapDispatchToProps = (dispatch: any) => {
 }
 
 const styles = (theme: Theme) => ({
-  fullWidth: {
-    width: '100%',
+  container: {
+    padding: theme.spacing(1, 1.5, 2),
+    maxWidth: 560,
   },
-  gridPadding: {
-    padding: '0 12px !important',
+  actionButton: {
+    textTransform: 'none' as 'none',
   },
-  button: {
-    marginTop: theme.spacing(3),
-    marginRight: theme.spacing(2),
+  hint: {
+    marginTop: theme.spacing(0.5),
+    color: theme.palette.text.secondary,
+  },
+  divider: {
+    margin: theme.spacing(0.5, 0),
+  },
+  certRow: {
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: 40,
+    // The selector buttons carry a legacy top margin meant for the old grid layout;
+    // neutralise it so the stacked rows line up evenly.
+    '& button': {
+      marginTop: 0,
+    },
   },
 })
 

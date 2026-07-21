@@ -36,6 +36,21 @@ export const RpcEvents = {
   openDialog: { topic: 'openDialog' } as RpcEvent<OpenDialogOptionsV2, OpenDialogReturnValueV2>,
   saveDialog: { topic: 'saveDialog' } as RpcEvent<SaveDialogOptionsV2, SaveDialogReturnValueV2>,
   uploadCertificate: { topic: 'uploadCertificate' } as RpcEvent<CertificateUploadRequest, CertificateUploadResponse>,
+  readCertificateBundle: { topic: 'readCertificateBundle' } as RpcEvent<
+    { filePath: string },
+    CertificateBundleResultV2
+  >,
+}
+
+export interface CertificateBundleFieldV2 {
+  name: string
+  data: string // base64 encoded
+}
+
+export interface CertificateBundleResultV2 {
+  selfSignedCertificate?: CertificateBundleFieldV2
+  clientCertificate?: CertificateBundleFieldV2
+  clientKey?: CertificateBundleFieldV2
 }
 
 // Type definitions

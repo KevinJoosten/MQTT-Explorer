@@ -13,7 +13,7 @@ import * as path from 'path'
 import { ActionTypes, Action, SortOption } from '../reducers/ConnectionManager'
 import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 import { connectionsMigrator } from './migrations/Connection'
-import { rendererRpc, readFromFile } from '../eventBus'
+import { rendererRpc, readFromFile, readCertificateBundle } from '../eventBus'
 import { makeOpenDialogRpc } from '../../../events/OpenDialogRequest'
 import { v4 } from 'uuid'
 
@@ -84,6 +84,44 @@ export const selectCertificate =
           [type]: certificate,
         })
       )
+    } catch (error) {
+      dispatch(showError(error))
+    }
+  }
+
+export const selectCertificateBundle =
+  (connectionId: string) => async (dispatch: Dispatch<any>, getState: () => AppState) => {
+    try {
+      const openDialogReturnValue = await rendererRpc.call(makeOpenDialogRpc(), {
+        properties: ['openFile'],
+        filters: [{ name: 'Certificate bundle', extensions: ['zip'] }],
+        securityScopedBookmarks: true,
+      })
+
+      const selectedFile = openDialogReturnValue.filePaths && openDialogReturnValue.filePaths[0]
+      if (!selectedFile) {
+        return
+      }
+
+      const bundle = await rendererRpc.call(readCertificateBundle, { filePath: selectedFile })
+
+      const changeSet: Partial<ConnectionOptions> = {}
+      if (bundle.selfSignedCertificate) {
+        changeSet.selfSignedCertificate = bundle.selfSignedCertificate
+      }
+      if (bundle.clientCertificate) {
+        changeSet.clientCertificate = bundle.clientCertificate
+      }
+      if (bundle.clientKey) {
+        changeSet.clientKey = bundle.clientKey
+      }
+
+      if (Object.keys(changeSet).length === 0) {
+        dispatch(showError('No certificates or keys were found in the selected bundle.'))
+        return
+      }
+
+      dispatch(updateConnection(connectionId, changeSet))
     } catch (error) {
       dispatch(showError(error))
     }

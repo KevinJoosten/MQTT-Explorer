@@ -19,7 +19,8 @@ import {
 import { shouldAutoUpdate, handleAutoUpdate } from './autoUpdater'
 import { registerCrashReporter } from './registerCrashReporter'
 import { makeOpenDialogRpc, makeSaveDialogRpc } from '../events/OpenDialogRequest'
-import { getAppVersion, writeToFile, readFromFile } from '../events'
+import { getAppVersion, writeToFile, readFromFile, readCertificateBundle } from '../events'
+import { readCertificateBundleFromZip } from '../backend/src/CertificateBundle/ZipCertificateBundle'
 import { backendRpc, backendEvents } from '../events/EventSystem/EventBus'
 import { RpcEvents } from '../events/EventsV2'
 
@@ -60,6 +61,11 @@ app.whenReady().then(() => {
       return Buffer.from(content)
     }
     return fsPromise.readFile(filePath)
+  })
+
+  // Certificate bundle (zip) handler — extracts ca/cert/key from a single archive
+  backendRpc.on(readCertificateBundle, async ({ filePath }) => {
+    return readCertificateBundleFromZip(filePath)
   })
 
   // Certificate upload handler - works for both Electron and browser mode via IPC

@@ -64,3 +64,23 @@ export const writeToFile: RpcEvent<{ filePath: string; data: string; encoding?: 
 export const readFromFile: RpcEvent<{ filePath: string; encoding?: string }, Buffer> = {
   topic: 'readFromFile',
 }
+
+export interface CertificateBundleField {
+  name: string
+  data: string // base64 encoded
+}
+
+/**
+ * Result of extracting a certificate bundle (zip). Only the slots that could be
+ * resolved from the bundle's files are populated. Structurally matches
+ * MappedCertificateBundle in backend/src/CertificateBundle.
+ */
+export interface CertificateBundleResult {
+  selfSignedCertificate?: CertificateBundleField
+  clientCertificate?: CertificateBundleField
+  clientKey?: CertificateBundleField
+}
+
+export const readCertificateBundle: RpcEvent<{ filePath: string }, CertificateBundleResult> = {
+  topic: 'readCertificateBundle',
+}
