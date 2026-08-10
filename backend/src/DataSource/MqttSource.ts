@@ -112,8 +112,16 @@ export class MqttSource implements DataSource<MqttOptions> {
 
     client.on('connect', () => {
       this.stateMachine.setConnected(true)
+      // MQTT v5 "Retain As Published": ask the broker to keep the publisher's
+      // retain flag on messages delivered to an established subscription. Without
+      // it (and always on v3.1.1) the broker strips retain to 0 on live messages,
+      // so a topic's "Retained" indicator would vanish on the next publish.
+      const subscribeOptions: any = { qos: 0 }
+      if (options.protocolVersion === 5) {
+        subscribeOptions.rap = true
+      }
       options.subscriptions.forEach(subscription => {
-        client.subscribe(subscription.topic, { qos: subscription.qos }, (err: Error | null) => {
+        client.subscribe(subscription.topic, { ...subscribeOptions, qos: subscription.qos }, (err: Error | null) => {
           if (err) {
             this.stateMachine.setError(err)
           }
