@@ -80,6 +80,22 @@ let migrations: Migration[] = [
       }
     },
   },
+  // Raise default subscription QoS from 0 to 2 so the true message QoS is
+  // observable. The delivered QoS is min(publishQoS, subscriptionQoS), so a
+  // QoS 0 subscription forced every message to display as QoS 0. Only the old
+  // default (qos 0) is raised; deliberately chosen QoS 1 subscriptions are kept.
+  {
+    from: 2,
+    apply: (connection: ConnectionOptions): ConnectionOptions => {
+      return {
+        ...connection,
+        configVersion: 3,
+        subscriptions: connection.subscriptions.map(subscription =>
+          subscription.qos === 0 ? { ...subscription, qos: 2 } : subscription
+        ),
+      }
+    },
+  },
 ]
 
 const connectionMigrator = new ConfigMigrator(migrations)

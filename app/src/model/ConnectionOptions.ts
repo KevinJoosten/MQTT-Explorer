@@ -10,7 +10,7 @@ export interface CertificateParameters {
 }
 
 export interface ConnectionOptions {
-  configVersion: 1 | 2
+  configVersion: 1 | 2 | 3
   type: 'mqtt'
   id: string
   host: string
@@ -59,7 +59,7 @@ function generateClientId() {
 
 export function createEmptyConnection(): ConnectionOptions {
   return {
-    configVersion: 2,
+    configVersion: 3,
     certValidation: true,
     clientId: generateClientId(),
     id: v4() as string,
@@ -67,9 +67,11 @@ export function createEmptyConnection(): ConnectionOptions {
     encryption: false,
     password: undefined,
     username: undefined,
+    // Subscribe at QoS 2 so the delivered QoS (min of publish/subscribe QoS)
+    // reflects the publisher's QoS instead of always being capped to 0.
     subscriptions: [
-      { topic: '#', qos: 0 },
-      { topic: '$SYS/#', qos: 0 },
+      { topic: '#', qos: 2 },
+      { topic: '$SYS/#', qos: 2 },
     ],
     type: 'mqtt',
     host: '',

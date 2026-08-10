@@ -22,7 +22,7 @@ interface Props {
 }
 
 const ConnectionSettings = memo(function ConnectionSettings(props: Props) {
-  const [qos, setQos] = useState<QoS>(0)
+  const [qos, setQos] = useState<QoS>(2)
   const [topic, setTopic] = useState('')
   const { classes } = props
 
