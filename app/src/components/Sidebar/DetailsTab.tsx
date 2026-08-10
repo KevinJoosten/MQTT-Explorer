@@ -146,9 +146,20 @@ function DetailsTab(props: Props) {
               </Typography>
             </Box>
             <Box className={classes.metadataRight}>
-              {node.message?.retain === true && (
-                <Chip label="Retained" size="small" variant="outlined" color="primary" className={classes.chip} />
-              )}
+              {node.message?.retain === true ? (
+                <Tooltip title="This message was delivered with the retain flag set.">
+                  <Chip label="Retained" size="small" variant="outlined" color="primary" className={classes.chip} />
+                </Tooltip>
+              ) : node.wasRetained ? (
+                <Tooltip title="This topic has a retained value on the broker, but the message shown is a live update whose retain flag was not set (see MQTT retain semantics).">
+                  <Chip
+                    label="was retained"
+                    size="small"
+                    variant="outlined"
+                    className={`${classes.chip} ${classes.chipMuted}`}
+                  />
+                </Tooltip>
+              ) : null}
               <Chip
                 label={`QoS ${node.message?.qos ?? 0}`}
                 size="small"
@@ -214,7 +225,7 @@ function DetailsTab(props: Props) {
             <Box className={classes.valueActions}>
               <Copy getValue={getDecodedValue} />
               <Save getData={getData} />
-              {node.message?.retain && <DeleteSelectedTopicButton />}
+              {(node.message?.retain || node.wasRetained) && <DeleteSelectedTopicButton />}
             </Box>
           </Box>
 
@@ -387,6 +398,12 @@ const styles = (theme: Theme) => ({
   },
   chip: {
     height: '24px',
+  },
+  chipMuted: {
+    opacity: 0.65,
+    color: theme.palette.text.secondary,
+    borderColor: theme.palette.divider,
+    borderStyle: 'dashed' as 'dashed',
   },
   actionToolbar: {
     display: 'flex',

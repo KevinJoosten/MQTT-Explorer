@@ -12,6 +12,13 @@ export class TreeNode<ViewModel extends Destroyable> {
   public edges: { [s: string]: Edge<ViewModel> } = {}
   public edgeArray: Array<Edge<ViewModel>> = []
   public collapsed = false
+  /**
+   * Sticky marker: true once a retained message has been seen for this topic and
+   * kept across subsequent live (non-retained) updates, because the broker still
+   * holds a retained value. Reset when the value is cleared (empty payload).
+   * Distinct from `message.retain`, which reflects only the current message.
+   */
+  public wasRetained = false
   public messages: number = 0
   public lastUpdate: number = Date.now()
   public onMerge = new EventDispatcher<void>()
@@ -136,6 +143,7 @@ export class TreeNode<ViewModel extends Destroyable> {
     node.messageHistory = this.messageHistory.clone()
     node.messages = this.messages
     node.lastUpdate = this.lastUpdate
+    node.wasRetained = this.wasRetained
 
     return node
   }
@@ -144,6 +152,14 @@ export class TreeNode<ViewModel extends Destroyable> {
     this.messageHistory.add(message)
     this.message = message
     this.messages += 1
+
+    if (!message.payload || message.length === 0) {
+      // Value cleared/deleted → topic no longer has a retained value.
+      this.wasRetained = false
+    } else if (message.retain) {
+      this.wasRetained = true
+    }
+    // A non-retained live update leaves wasRetained unchanged (still retained on broker).
   }
 
   public hash(): string {
