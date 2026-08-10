@@ -49,7 +49,7 @@ class Certificates extends React.PureComponent<Props, State> {
     const { classes, connection } = this.props
     return (
       <form noValidate={true} autoComplete="off" className={classes.container}>
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {!isBrowserMode && (
             <div>
               <Tooltip
