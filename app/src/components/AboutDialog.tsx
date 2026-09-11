@@ -25,20 +25,20 @@ interface AboutDialogProps {
 
 /**
  * About Dialog Component
- * 
+ *
  * This component displays application information including version, author, and license.
- * 
+ *
  * LICENSE NOTICE (CC-BY-ND-4.0):
  * This component is licensed under Creative Commons Attribution-NoDerivatives 4.0 International.
- * 
+ *
  * REQUIRED ATTRIBUTION:
  * - Author: Thomas Nordquist
  * - License: CC-BY-ND-4.0
- * 
+ *
  * RESTRICTIONS:
  * - BY (Attribution): You must give appropriate credit to the author
  * - ND (NoDerivatives): You may not create derivative works without permission
- * 
+ *
  * Removing or modifying this attribution violates the license terms.
  * For full license text: https://creativecommons.org/licenses/by-nd/4.0/legalcode
  */
@@ -46,15 +46,19 @@ export function AboutDialog(props: AboutDialogProps) {
   const [version, setVersion] = React.useState<string>(FALLBACK_VERSION)
 
   React.useEffect(() => {
-    // Fetch version from backend
-    const rendererRpc = getRendererRpc()
-    rendererRpc
-      .call(getAppVersion, undefined, 5000)
-      .then(v => setVersion(v))
-      .catch(() => {
-        // Fallback to hardcoded version if RPC fails
-        console.warn('Failed to fetch app version, using fallback')
-      })
+    // Fetch version from backend. Resolving the event bus can throw outright when
+    // it is not available yet, which the promise's catch would not cover.
+    try {
+      getRendererRpc()
+        .call(getAppVersion, undefined, 5000)
+        .then(v => setVersion(v))
+        .catch(() => {
+          // Fallback to hardcoded version if RPC fails
+          console.warn('Failed to fetch app version, using fallback')
+        })
+    } catch (error) {
+      console.warn('Failed to fetch app version, using fallback')
+    }
   }, [])
 
   return (
@@ -70,15 +74,11 @@ export function AboutDialog(props: AboutDialogProps) {
         <Typography variant="body1" gutterBottom>
           <strong>Description:</strong> Explore your message queues
         </Typography>
-        
+
         <Divider sx={{ my: 2 }} />
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }} data-testid="about-author">
-          <Avatar
-            src="https://github.com/thomasnordquist.png"
-            alt="Thomas Nordquist"
-            sx={{ width: 56, height: 56 }}
-          />
+          <Avatar src="https://github.com/thomasnordquist.png" alt="Thomas Nordquist" sx={{ width: 56, height: 56 }} />
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
               Thomas Nordquist
