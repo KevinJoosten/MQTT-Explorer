@@ -26,8 +26,12 @@ export interface Subscription {
 
 export type QoS = 0 | 1 | 2
 
+// CONNACK codes meaning "I don't speak that version": 1 in MQTT v3, 0x84 in v5.
+const unsupportedProtocolVersionCodes = [1, 0x84]
+
 export class MqttSource implements DataSource<MqttOptions> {
   public stateMachine: DataSourceStateMachine = new DataSourceStateMachine()
+  public protocolVersion?: 3 | 4 | 5
   private client: MqttClient | undefined
   private messageCallback?: (topic: string, message: Buffer, packet: any) => void
   public topicSeparator = '/'
@@ -38,6 +42,16 @@ export class MqttSource implements DataSource<MqttOptions> {
 
   public connect(options: MqttOptions): DataSourceStateMachine {
     this.stateMachine.setConnecting()
+    // "Auto" starts at v5 and downgrades if the broker refuses it. mqtt.js does not
+    // negotiate by itself: leaving protocolVersion unset simply picks v3.1.1, so auto
+    // would never reach v5.
+    this.connectWithVersion(options, options.protocolVersion ?? 5)
+
+    return this.stateMachine
+  }
+
+  private connectWithVersion(options: MqttOptions, protocolVersion: 3 | 4 | 5) {
+    this.protocolVersion = protocolVersion
 
     const urlStr = options.tls ? options.url.replace(/^(mqtt|ws):/, '$1s:') : options.url
     let url
@@ -53,7 +67,7 @@ export class MqttSource implements DataSource<MqttOptions> {
     const servername = options.tls && !isIpAddress ? url.hostname : undefined
 
     const client = mqttConnect(url.toString(), {
-      protocolVersion: options.protocolVersion, // Use configured version, or undefined for auto-negotiation
+      protocolVersion,
       resubscribe: false,
       rejectUnauthorized: options.certValidation,
       username: options.username,
@@ -68,7 +82,23 @@ export class MqttSource implements DataSource<MqttOptions> {
 
     this.client = client
 
+    // Brokers refuse an unsupported version either with a CONNACK code or, as
+    // MQTT-3.1.4-1 permits, by hanging up. Under "Auto" both mean: try v3.1.1.
+    let everConnected = false
+    const canDowngrade = () => options.protocolVersion === undefined && protocolVersion === 5 && !everConnected
+    const downgradeToV311 = () => {
+      client.removeAllListeners() // the imminent 'close' belongs to the retry, not to a disconnect
+      client.end(true)
+      this.stateMachine.setConnecting()
+      this.connectWithVersion(options, 4)
+    }
+
     client.on('error', (error: Error) => {
+      if (canDowngrade() && unsupportedProtocolVersionCodes.includes((error as any).code)) {
+        downgradeToV311()
+        return
+      }
+
       let enriched = error
       if (error.message?.includes('socket disconnected before secure TLS connection was established')) {
         const msg =
@@ -99,6 +129,10 @@ export class MqttSource implements DataSource<MqttOptions> {
     })
 
     client.on('close', () => {
+      if (canDowngrade()) {
+        downgradeToV311()
+        return
+      }
       this.stateMachine.setConnected(false)
     })
 
@@ -111,13 +145,14 @@ export class MqttSource implements DataSource<MqttOptions> {
     })
 
     client.on('connect', () => {
-      this.stateMachine.setConnected(true)
+      everConnected = true
+      this.stateMachine.setConnected(true, protocolVersion)
       // MQTT v5 "Retain As Published": ask the broker to keep the publisher's
       // retain flag on messages delivered to an established subscription. Without
       // it (and always on v3.1.1) the broker strips retain to 0 on live messages,
       // so a topic's "Retained" indicator would vanish on the next publish.
       const subscribeOptions: any = { qos: 0 }
-      if (options.protocolVersion === 5) {
+      if (protocolVersion === 5) {
         subscribeOptions.rap = true
       }
       options.subscriptions.forEach(subscription => {
@@ -132,8 +167,6 @@ export class MqttSource implements DataSource<MqttOptions> {
     client.on('message', (topic, message, packet) => {
       this.messageCallback && this.messageCallback(topic, message, packet)
     })
-
-    return this.stateMachine
   }
 
   public publish(msg: MqttMessage) {
@@ -143,12 +176,12 @@ export class MqttSource implements DataSource<MqttOptions> {
         qos: msg.qos,
         retain: msg.retain,
       }
-      
+
       // Add MQTT v5 properties if present and using v5
       if (msg.properties && protocolVersion === 5) {
         options.properties = msg.properties
       }
-      
+
       this.client.publish(msg.topic, (msg.payload && new Base64Message(msg.payload))?.toBuffer() ?? '', options)
     }
   }

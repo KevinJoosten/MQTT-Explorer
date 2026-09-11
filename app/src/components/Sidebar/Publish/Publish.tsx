@@ -97,10 +97,7 @@ function Publish(props: Props) {
           />
           <RetainSwitch />
           {props.protocolVersion === 5 && (
-            <UserProperties
-              userProperties={props.userProperties}
-              onChange={props.actions.setUserProperties}
-            />
+            <UserProperties userProperties={props.userProperties} onChange={props.actions.setUserProperties} />
           )}
         </div>
         <PublishHistory history={history} />
@@ -221,16 +218,15 @@ const mapDispatchToProps = (dispatch: any) => {
 }
 
 const mapStateToProps = (state: AppState) => {
-  const connectionId = state.connection.connectionId
-  const connection = connectionId ? state.connectionManager.connections[connectionId] : undefined
-  
   return {
     topic: state.publish.manualTopic,
     payload: state.publish.payload,
     editorMode: state.publish.editorMode,
     retain: state.publish.retain,
     userProperties: state.publish.userProperties,
-    protocolVersion: connection?.protocolVersion,
+    // The negotiated version, not the configured one: "Auto" only resolves to a
+    // concrete version once the broker has accepted the connection.
+    protocolVersion: state.connection.protocolVersion,
   }
 }
 
