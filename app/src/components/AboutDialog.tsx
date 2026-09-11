@@ -16,7 +16,7 @@ import { getRendererRpc } from '../eventBus'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 
 // Fallback version if RPC call fails (e.g., in browser mode during initialization)
-const FALLBACK_VERSION = '0.4.0-beta.5'
+const FALLBACK_VERSION = '0.5.2'
 
 interface AboutDialogProps {
   open: boolean
