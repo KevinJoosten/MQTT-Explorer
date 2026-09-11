@@ -14,7 +14,7 @@ function PublishTab(props: Props) {
   const { classes } = props
 
   return (
-    <Box className={classes.root}>
+    <Box className={classes.root} data-testid="publish-tab">
       <Box className={classes.header}>
         <Typography variant="subtitle2" className={classes.title}>
           Publish Message
@@ -23,7 +23,7 @@ function PublishTab(props: Props) {
           Send messages to MQTT topics
         </Typography>
       </Box>
-      
+
       <React.Suspense fallback={<div>Loading...</div>}>
         <Publish connectionId={props.connectionId} />
       </React.Suspense>

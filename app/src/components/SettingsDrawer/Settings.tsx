@@ -5,6 +5,7 @@ import ChevronRight from '@mui/icons-material/ChevronRight'
 import CloudOff from '@mui/icons-material/CloudOff'
 import Logout from '@mui/icons-material/Logout'
 import TimeLocale from './TimeLocale'
+import { autoExpandLimitSet } from './autoExpandLimitSet'
 import { AppState } from '../../reducers'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
@@ -29,33 +30,6 @@ import {
   Typography,
   Tooltip,
 } from '@mui/material'
-
-export const autoExpandLimitSet = [
-  {
-    limit: 0,
-    name: 'Collapsed',
-  },
-  {
-    limit: 2,
-    name: 'Few',
-  },
-  {
-    limit: 5,
-    name: 'Some',
-  },
-  {
-    limit: 15,
-    name: 'Most',
-  },
-  {
-    limit: 30,
-    name: 'Most',
-  },
-  {
-    limit: 1e6,
-    name: 'All',
-  },
-]
 
 const styles = (theme: Theme) => ({
   drawer: {
@@ -105,6 +79,7 @@ interface Props {
   classes: any
   highlightTopicUpdates: boolean
   selectTopicWithMouseOver: boolean
+  combineDetailsAndPublish: boolean
   store?: any
   topicOrder: TopicOrder
   visible: boolean
@@ -144,6 +119,20 @@ class Settings extends React.PureComponent<Props, {}> {
         tooltip="Select topics on mouse over"
         value={selectTopicWithMouseOver}
         action={toggle}
+      />
+    )
+  }
+
+  private toggleCombineDetailsAndPublish() {
+    const { actions, combineDetailsAndPublish } = this.props
+
+    return (
+      <BooleanSwitch
+        title="Combined Sidebar"
+        tooltip="Show Details and Publish together instead of separate tabs"
+        value={combineDetailsAndPublish}
+        action={actions.settings.toggleCombineDetailsAndPublish}
+        data-testid="combined-sidebar-toggle"
       />
     )
   }
@@ -245,6 +234,7 @@ class Settings extends React.PureComponent<Props, {}> {
           <TimeLocale />
           {this.renderHighlightTopicUpdates()}
           {this.selectTopicsOnMouseOver()}
+          {this.toggleCombineDetailsAndPublish()}
           {this.toggleTheme()}
         </div>
         <Tooltip placement="top" title="App Author">
@@ -265,13 +255,13 @@ function MobileActionButtons({ classes, actions }: { classes: any; actions: any 
   const handleLogout = async () => {
     // Disconnect first
     actions.connection.disconnect()
-    
+
     // Clear credentials from sessionStorage
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem('mqtt-explorer-username')
       sessionStorage.removeItem('mqtt-explorer-password')
     }
-    
+
     // Reload page to reset all state and show login dialog
     if (typeof window !== 'undefined') {
       window.location.reload()
@@ -311,6 +301,7 @@ const mapStateToProps = (state: AppState) => {
     visible: state.globalState.get('settingsVisible'),
     highlightTopicUpdates: state.settings.get('highlightTopicUpdates'),
     selectTopicWithMouseOver: state.settings.get('selectTopicWithMouseOver'),
+    combineDetailsAndPublish: state.settings.get('combineDetailsAndPublish'),
     theme: state.settings.get('theme'),
   }
 }

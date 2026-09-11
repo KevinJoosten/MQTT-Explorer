@@ -11,6 +11,7 @@ import { usePollingToFetchTreeNode } from '../helper/usePollingToFetchTreeNode'
 import { Tabs, Tab, Box, useMediaQuery, useTheme } from '@mui/material'
 import DetailsTab from './DetailsTab'
 import PublishTab from './PublishTab'
+import SidebarFooter from './SidebarFooter'
 
 const throttle = require('lodash.throttle')
 
@@ -22,6 +23,7 @@ interface Props {
   settingsActions: typeof settingsActions
   classes: any
   connectionId?: string
+  combineDetailsAndPublish: boolean
 }
 
 function useUpdateNodeWhenNodeReceivesUpdates(node?: q.TreeNode<any>) {
@@ -64,6 +66,21 @@ function SidebarNew(props: Props) {
       <div id="Sidebar" className={classes.root}>
         <Box className={classes.mobileContent}>
           <DetailsTab node={node} />
+          <SidebarFooter node={node} />
+        </Box>
+      </div>
+    )
+  }
+
+  // Combined: one scrollable column, so a message can be composed while the
+  // selected topic keeps updating.
+  if (props.combineDetailsAndPublish) {
+    return (
+      <div id="Sidebar" className={classes.root}>
+        <Box className={classes.tabContent}>
+          <DetailsTab node={node} />
+          <PublishTab connectionId={props.connectionId} />
+          <SidebarFooter node={node} />
         </Box>
       </div>
     )
@@ -85,7 +102,7 @@ function SidebarNew(props: Props) {
           <Tab label="Publish" className={classes.tab} />
         </Tabs>
       </Box>
-      
+
       <Box className={classes.tabContent}>
         <Box sx={{ display: tabValue === 0 ? 'block' : 'none' }}>
           <DetailsTab node={node} />
@@ -93,6 +110,7 @@ function SidebarNew(props: Props) {
         <Box sx={{ display: tabValue === 1 ? 'block' : 'none' }}>
           <PublishTab connectionId={props.connectionId} />
         </Box>
+        <SidebarFooter node={node} />
       </Box>
     </div>
   )
@@ -103,6 +121,7 @@ const mapStateToProps = (state: AppState) => {
   return {
     tree: state.connection.tree,
     nodePath: node && node.path(),
+    combineDetailsAndPublish: state.settings.get('combineDetailsAndPublish'),
   }
 }
 

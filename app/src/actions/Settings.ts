@@ -1,7 +1,7 @@
 import * as q from '../../../backend/src/Model'
 import { ActionTypes, SettingsStateModel, TopicOrder, ValueRendererDisplayMode } from '../reducers/Settings'
 import { AppState } from '../reducers'
-import { autoExpandLimitSet } from '../components/SettingsDrawer/Settings'
+import { autoExpandLimitSet } from '../components/SettingsDrawer/autoExpandLimitSet'
 import { Base64Message } from '../../../backend/src/Model/Base64Message'
 import { batchActions } from 'redux-batched-actions'
 import { default as persistentStorage, StorageIdentifier } from '../utils/PersistentStorage'
@@ -80,6 +80,13 @@ export const setValueDisplayMode =
 export const toggleHighlightTopicUpdates = () => (dispatch: Dispatch<any>) => {
   dispatch({
     type: ActionTypes.SETTINGS_TOGGLE_HIGHLIGHT_ACTIVITY,
+  })
+  dispatch(storeSettings())
+}
+
+export const toggleCombineDetailsAndPublish = () => (dispatch: Dispatch<any>) => {
+  dispatch({
+    type: ActionTypes.SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH,
   })
   dispatch(storeSettings())
 }

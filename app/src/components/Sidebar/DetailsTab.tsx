@@ -1,13 +1,22 @@
 import * as q from '../../../../backend/src/Model'
 import React, { useCallback } from 'react'
-import { Box, Typography, IconButton, Chip, Tooltip, Button, Accordion, AccordionSummary, AccordionDetails } from '@mui/material'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Chip,
+  Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Theme } from '@mui/material/styles'
 import { withStyles } from '@mui/styles'
 import { AppState } from '../../reducers'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { sidebarActions, globalActions } from '../../actions'
+import { sidebarActions } from '../../actions'
 import Copy from '../helper/Copy'
 import Save from '../helper/Save'
 import DateFormatter from '../helper/DateFormatter'
@@ -18,7 +27,6 @@ import DeleteSelectedTopicButton from './ValueRenderer/DeleteSelectedTopicButton
 import { useDecoder } from '../hooks/useDecoder'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
-import Info from '@mui/icons-material/Info'
 import SimpleBreadcrumb from './SimpleBreadcrumb'
 import AIAssistant from './AIAssistant'
 
@@ -27,7 +35,6 @@ interface Props {
   classes: any
   compareMessage?: q.Message
   sidebarActions: typeof sidebarActions
-  globalActions: typeof globalActions
 }
 
 function DetailsTab(props: Props) {
@@ -90,19 +97,6 @@ function DetailsTab(props: Props) {
         <Typography variant="body2" color="textSecondary" align="center">
           Select a topic to view details
         </Typography>
-        
-        {/* About Button - always show even when no topic selected */}
-        <Box className={classes.aboutSection}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<Info />}
-            onClick={() => props.globalActions.toggleAboutDialogVisibility()}
-            fullWidth
-          >
-            About MQTT Explorer
-          </Button>
-        </Box>
       </Box>
     )
   }
@@ -160,12 +154,7 @@ function DetailsTab(props: Props) {
                   />
                 </Tooltip>
               ) : null}
-              <Chip
-                label={`QoS ${node.message?.qos ?? 0}`}
-                size="small"
-                variant="outlined"
-                className={classes.chip}
-              />
+              <Chip label={`QoS ${node.message?.qos ?? 0}`} size="small" variant="outlined" className={classes.chip} />
             </Box>
           </Box>
 
@@ -179,32 +168,32 @@ function DetailsTab(props: Props) {
               </AccordionSummary>
               <AccordionDetails>
                 <Box className={classes.userPropertiesGrid}>
-                {Object.entries(node.message.properties).map(([key, value]: [string, any]) => {
-                  // Skip userProperties if it's an object, handle it separately
-                  if (key === 'userProperties' && typeof value === 'object' && value !== null) {
-                    return Object.entries(value).map(([upKey, upValue]: [string, any]) => (
-                      <Box key={`up-${upKey}`} className={classes.userProperty}>
+                  {Object.entries(node.message.properties).map(([key, value]: [string, any]) => {
+                    // Skip userProperties if it's an object, handle it separately
+                    if (key === 'userProperties' && typeof value === 'object' && value !== null) {
+                      return Object.entries(value).map(([upKey, upValue]: [string, any]) => (
+                        <Box key={`up-${upKey}`} className={classes.userProperty}>
+                          <Typography variant="caption" className={classes.userPropertyKey}>
+                            {upKey}:
+                          </Typography>
+                          <Typography variant="caption" className={classes.userPropertyValue}>
+                            {String(upValue)}
+                          </Typography>
+                        </Box>
+                      ))
+                    }
+                    // Display other properties
+                    return (
+                      <Box key={key} className={classes.userProperty}>
                         <Typography variant="caption" className={classes.userPropertyKey}>
-                          {upKey}:
+                          {key}:
                         </Typography>
                         <Typography variant="caption" className={classes.userPropertyValue}>
-                          {String(upValue)}
+                          {typeof value === 'boolean' ? String(value) : String(value)}
                         </Typography>
                       </Box>
-                    ))
-                  }
-                  // Display other properties
-                  return (
-                    <Box key={key} className={classes.userProperty}>
-                      <Typography variant="caption" className={classes.userPropertyKey}>
-                        {key}:
-                      </Typography>
-                      <Typography variant="caption" className={classes.userPropertyValue}>
-                        {typeof value === 'boolean' ? String(value) : String(value)}
-                      </Typography>
-                    </Box>
-                  )
-                })}
+                    )
+                  })}
                 </Box>
               </AccordionDetails>
             </Accordion>
@@ -220,8 +209,7 @@ function DetailsTab(props: Props) {
                 <ActionButtons />
               </Box>
             )}
-            <Box className={classes.actionButtons}>
-            </Box>
+            <Box className={classes.actionButtons}></Box>
             <Box className={classes.valueActions}>
               <Copy getValue={getDecodedValue} />
               <Save getData={getData} />
@@ -240,54 +228,11 @@ function DetailsTab(props: Props) {
           <Box className={classes.historySection}>
             <MessageHistory onSelect={handleMessageHistorySelect} selected={compareMessage} node={node} />
           </Box>
-
-          {/* Stats Section - Moved to end of value section */}
-          <Box className={classes.statsSection}>
-            <Box className={classes.statsGrid}>
-              <Box className={classes.statItem}>
-                <Typography variant="body2" color="textSecondary" className={classes.statLabel}>
-                  Messages
-                </Typography>
-                <Typography variant="h6" className={classes.statValue}>
-                  {node.messages}
-                </Typography>
-              </Box>
-              <Box className={classes.statItem}>
-                <Typography variant="body2" color="textSecondary" className={classes.statLabel}>
-                  Subtopics
-                </Typography>
-                <Typography variant="h6" className={classes.statValue}>
-                  {node.childTopicCount()}
-                </Typography>
-              </Box>
-              <Box className={classes.statItem}>
-                <Typography variant="body2" color="textSecondary" className={classes.statLabel}>
-                  Total
-                </Typography>
-                <Typography variant="h6" className={classes.statValue}>
-                  {node.leafMessageCount()}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
         </Box>
       )}
 
       {/* AI Assistant - Always available when a node is selected */}
       {node && <AIAssistant node={node} />}
-
-      {/* About Section - always visible at bottom */}
-      <Box className={classes.aboutSection}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<Info />}
-          onClick={() => props.globalActions.toggleAboutDialogVisibility()}
-          fullWidth
-        >
-          About MQTT Explorer
-        </Button>
-      </Box>
     </Box>
   )
 }
@@ -310,16 +255,6 @@ const styles = (theme: Theme) => ({
     padding: theme.spacing(3),
     gap: theme.spacing(3),
   },
-  aboutSection: {
-    marginTop: theme.spacing(3),
-    paddingTop: theme.spacing(2),
-    borderTop: `1px solid ${theme.palette.divider}`,
-  },
-  aboutSection: {
-    marginTop: theme.spacing(3),
-    paddingTop: theme.spacing(2),
-    borderTop: `1px solid ${theme.palette.divider}`,
-  },
   // Topic section
   topicSection: {
     display: 'flex',
@@ -337,38 +272,6 @@ const styles = (theme: Theme) => ({
   },
   iconButton: {
     padding: theme.spacing(0.5),
-  },
-  // Stats section
-  statsSection: {
-    marginTop: theme.spacing(2),
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: theme.spacing(1.5),
-    [theme.breakpoints.down('sm')]: {
-      gap: theme.spacing(1),
-    },
-  },
-  statItem: {
-    display: 'flex',
-    flexDirection: 'column' as 'column',
-    alignItems: 'center',
-    padding: theme.spacing(1.5, 1),
-    backgroundColor: theme.palette.action.hover,
-    borderRadius: theme.shape.borderRadius,
-    gap: theme.spacing(0.5),
-  },
-  statLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 500,
-    textTransform: 'uppercase' as 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  statValue: {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    lineHeight: 1,
   },
   // Value section
   valueSection: {
@@ -486,7 +389,6 @@ const mapStateToProps = (state: AppState) => {
 const mapDispatchToProps = (dispatch: any) => {
   return {
     sidebarActions: bindActionCreators(sidebarActions, dispatch),
-    globalActions: bindActionCreators(globalActions, dispatch),
   }
 }
 

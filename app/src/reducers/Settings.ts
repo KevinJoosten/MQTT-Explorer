@@ -17,6 +17,7 @@ export interface SettingsStateModel {
   highlightTopicUpdates: boolean
   valueRendererDisplayMode: ValueRendererDisplayMode
   selectTopicWithMouseOver: boolean
+  combineDetailsAndPublish: boolean
   theme: 'light' | 'dark'
 }
 
@@ -30,6 +31,7 @@ export type Actions = SetAutoExpandLimitAction &
   SetValueRendererDisplayModeAction &
   SetTheme &
   SetSelectTopicWithMouseOverAction &
+  ToggleCombineDetailsAndPublishAction &
   SetTimeLocale
 
 export enum ActionTypes {
@@ -40,6 +42,7 @@ export enum ActionTypes {
   SETTINGS_DID_LOAD_SETTINGS = 'SETTINGS_DID_LOAD_SETTINGS',
   SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE = 'SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE',
   SETTINGS_SET_SELECT_TOPIC_WITH_MOUSE_OVER = 'SETTINGS_SET_SELECT_TOPIC_WITH_MOUSE_OVER',
+  SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH = 'SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH',
   SETTINGS_SET_THEME_LIGHT = 'SETTINGS_SET_THEME_LIGHT',
   SETTINGS_SET_THEME_DARK = 'SETTINGS_SET_THEME_DARK',
   SETTINGS_SET_TIME_LOCALE = 'SETTINGS_SET_TIME_LOCALE',
@@ -52,6 +55,7 @@ const initialState = Record<SettingsStateModel>({
   highlightTopicUpdates: true,
   valueRendererDisplayMode: 'raw',
   selectTopicWithMouseOver: false,
+  combineDetailsAndPublish: false,
   theme: 'light',
   topicFilter: undefined,
 })
@@ -70,6 +74,7 @@ const reducerActions: {
   SETTINGS_DID_LOAD_SETTINGS: didLoadSettings,
   SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE: setValueRendererDisplayMode,
   SETTINGS_SET_SELECT_TOPIC_WITH_MOUSE_OVER: setSelectTopicWithMouseOver,
+  SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH: toggleCombineDetailsAndPublish,
   SETTINGS_SET_THEME_LIGHT: setTheme('light'),
   SETTINGS_SET_THEME_DARK: setTheme('dark'),
   SETTINGS_SET_TIME_LOCALE: setTimeLocale,
@@ -133,6 +138,14 @@ export interface ToggleHighlightTopicUpdatesAction {
 
 function toggleHighlightTopicUpdates(state: SettingsState, action: ToggleHighlightTopicUpdatesAction) {
   return state.set('highlightTopicUpdates', !state.get('highlightTopicUpdates'))
+}
+
+export interface ToggleCombineDetailsAndPublishAction {
+  type: ActionTypes.SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH
+}
+
+function toggleCombineDetailsAndPublish(state: SettingsState, action: ToggleCombineDetailsAndPublishAction) {
+  return state.set('combineDetailsAndPublish', !state.get('combineDetailsAndPublish'))
 }
 
 export interface SetTopicOrderAction {
