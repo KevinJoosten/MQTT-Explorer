@@ -5,6 +5,7 @@ import { AppState } from '../../reducers'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { KeyCodes } from '../../utils/KeyCodes'
+import { rootLabel } from './rootLabel'
 import { SettingsState } from '../../reducers/Settings'
 import { TopicViewModel } from '../../model/TopicViewModel'
 import { treeActions } from '../../actions'
@@ -23,6 +24,7 @@ interface Props {
   connectionId?: string
   tree?: q.Tree<TopicViewModel>
   host?: string
+  connectionName?: string
   paused: boolean
   settings: SettingsState
 }
@@ -63,7 +65,7 @@ class TreeComponent extends React.PureComponent<Props, State> {
 
   constructor(props: any) {
     super(props)
-    this.state = { 
+    this.state = {
       lastUpdate: 0,
       isMobile: typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT,
     }
@@ -191,7 +193,7 @@ class TreeComponent extends React.PureComponent<Props, State> {
         key={tree.hash()}
         isRoot={true}
         treeNode={tree}
-        name={this.props.host}
+        name={rootLabel(this.props.host, this.props.connectionName, this.props.settings.get('showConnectionName'))}
         collapsed={false}
         settings={this.props.settings}
         lastUpdate={tree.lastUpdate}
@@ -202,13 +204,7 @@ class TreeComponent extends React.PureComponent<Props, State> {
 
     return (
       <div style={style} tabIndex={0} onKeyDown={this.keyEventHandler}>
-        {isMobile ? (
-          <div style={{ scrollSnapAlign: 'start', minWidth: '100%' }}>
-            {treeNode}
-          </div>
-        ) : (
-          treeNode
-        )}
+        {isMobile ? <div style={{ scrollSnapAlign: 'start', minWidth: '100%' }}>{treeNode}</div> : treeNode}
       </div>
     )
   }
@@ -220,6 +216,9 @@ const mapStateToProps = (state: AppState) => {
     paused: state.tree.get('paused'),
     filter: state.tree.get('filter'),
     host: state.connection.host,
+    connectionName: state.connection.connectionId
+      ? state.connectionManager.connections[state.connection.connectionId]?.name
+      : undefined,
     settings: state.settings,
   }
 }

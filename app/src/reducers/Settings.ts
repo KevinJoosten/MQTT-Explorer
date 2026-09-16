@@ -18,6 +18,7 @@ export interface SettingsStateModel {
   valueRendererDisplayMode: ValueRendererDisplayMode
   selectTopicWithMouseOver: boolean
   combineDetailsAndPublish: boolean
+  showConnectionName: boolean
   theme: 'light' | 'dark'
 }
 
@@ -32,6 +33,7 @@ export type Actions = SetAutoExpandLimitAction &
   SetTheme &
   SetSelectTopicWithMouseOverAction &
   ToggleCombineDetailsAndPublishAction &
+  ToggleShowConnectionNameAction &
   SetTimeLocale
 
 export enum ActionTypes {
@@ -43,6 +45,7 @@ export enum ActionTypes {
   SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE = 'SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE',
   SETTINGS_SET_SELECT_TOPIC_WITH_MOUSE_OVER = 'SETTINGS_SET_SELECT_TOPIC_WITH_MOUSE_OVER',
   SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH = 'SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH',
+  SETTINGS_TOGGLE_SHOW_CONNECTION_NAME = 'SETTINGS_TOGGLE_SHOW_CONNECTION_NAME',
   SETTINGS_SET_THEME_LIGHT = 'SETTINGS_SET_THEME_LIGHT',
   SETTINGS_SET_THEME_DARK = 'SETTINGS_SET_THEME_DARK',
   SETTINGS_SET_TIME_LOCALE = 'SETTINGS_SET_TIME_LOCALE',
@@ -56,6 +59,7 @@ const initialState = Record<SettingsStateModel>({
   valueRendererDisplayMode: 'raw',
   selectTopicWithMouseOver: false,
   combineDetailsAndPublish: false,
+  showConnectionName: false,
   theme: 'light',
   topicFilter: undefined,
 })
@@ -75,6 +79,7 @@ const reducerActions: {
   SETTINGS_SET_VALUE_RENDERER_DISPLAY_MODE: setValueRendererDisplayMode,
   SETTINGS_SET_SELECT_TOPIC_WITH_MOUSE_OVER: setSelectTopicWithMouseOver,
   SETTINGS_TOGGLE_COMBINE_DETAILS_AND_PUBLISH: toggleCombineDetailsAndPublish,
+  SETTINGS_TOGGLE_SHOW_CONNECTION_NAME: toggleShowConnectionName,
   SETTINGS_SET_THEME_LIGHT: setTheme('light'),
   SETTINGS_SET_THEME_DARK: setTheme('dark'),
   SETTINGS_SET_TIME_LOCALE: setTimeLocale,
@@ -146,6 +151,14 @@ export interface ToggleCombineDetailsAndPublishAction {
 
 function toggleCombineDetailsAndPublish(state: SettingsState, action: ToggleCombineDetailsAndPublishAction) {
   return state.set('combineDetailsAndPublish', !state.get('combineDetailsAndPublish'))
+}
+
+export interface ToggleShowConnectionNameAction {
+  type: ActionTypes.SETTINGS_TOGGLE_SHOW_CONNECTION_NAME
+}
+
+function toggleShowConnectionName(state: SettingsState, action: ToggleShowConnectionNameAction) {
+  return state.set('showConnectionName', !state.get('showConnectionName'))
 }
 
 export interface SetTopicOrderAction {

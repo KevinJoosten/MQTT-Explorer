@@ -80,6 +80,7 @@ interface Props {
   highlightTopicUpdates: boolean
   selectTopicWithMouseOver: boolean
   combineDetailsAndPublish: boolean
+  showConnectionName: boolean
   store?: any
   topicOrder: TopicOrder
   visible: boolean
@@ -133,6 +134,20 @@ class Settings extends React.PureComponent<Props, {}> {
         value={combineDetailsAndPublish}
         action={actions.settings.toggleCombineDetailsAndPublish}
         data-testid="combined-sidebar-toggle"
+      />
+    )
+  }
+
+  private toggleShowConnectionName() {
+    const { actions, showConnectionName } = this.props
+
+    return (
+      <BooleanSwitch
+        title="Connection Name"
+        tooltip="Show the stored connection name next to the host"
+        value={showConnectionName}
+        action={actions.settings.toggleShowConnectionName}
+        data-testid="connection-name-toggle"
       />
     )
   }
@@ -235,6 +250,7 @@ class Settings extends React.PureComponent<Props, {}> {
           {this.renderHighlightTopicUpdates()}
           {this.selectTopicsOnMouseOver()}
           {this.toggleCombineDetailsAndPublish()}
+          {this.toggleShowConnectionName()}
           {this.toggleTheme()}
         </div>
         <Tooltip placement="top" title="App Author">
@@ -302,6 +318,7 @@ const mapStateToProps = (state: AppState) => {
     highlightTopicUpdates: state.settings.get('highlightTopicUpdates'),
     selectTopicWithMouseOver: state.settings.get('selectTopicWithMouseOver'),
     combineDetailsAndPublish: state.settings.get('combineDetailsAndPublish'),
+    showConnectionName: state.settings.get('showConnectionName'),
     theme: state.settings.get('theme'),
   }
 }

@@ -91,6 +91,13 @@ export const toggleCombineDetailsAndPublish = () => (dispatch: Dispatch<any>) =>
   dispatch(storeSettings())
 }
 
+export const toggleShowConnectionName = () => (dispatch: Dispatch<any>) => {
+  dispatch({
+    type: ActionTypes.SETTINGS_TOGGLE_SHOW_CONNECTION_NAME,
+  })
+  dispatch(storeSettings())
+}
+
 export const setTopicOrder =
   (topicOrder: TopicOrder = TopicOrder.none) =>
   (dispatch: Dispatch<any>) => {
