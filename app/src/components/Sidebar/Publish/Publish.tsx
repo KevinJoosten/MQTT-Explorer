@@ -6,6 +6,7 @@ import PublishHistory from './PublishHistory'
 import React, { useCallback, useMemo, useState, useRef, memo } from 'react'
 import RetainSwitch from './RetainSwitch'
 import TopicInput from './TopicInput'
+import UserProperties from './UserProperties'
 import { AppState } from '../../../reducers'
 import { bindActionCreators } from 'redux'
 import { Button, Fab, Tooltip } from '@mui/material'
@@ -23,6 +24,8 @@ interface Props {
   globalActions: typeof globalActions
   retain: boolean
   editorMode: string
+  userProperties: Array<{ key: string; value: string }>
+  protocolVersion?: number
 }
 
 function useHistory(): [Array<Message>, (topic: string, payload?: string) => void] {
@@ -93,11 +96,14 @@ function Publish(props: Props) {
             editorRef={editorRef as any}
           />
           <RetainSwitch />
+          {props.protocolVersion === 5 && (
+            <UserProperties userProperties={props.userProperties} onChange={props.actions.setUserProperties} />
+          )}
         </div>
         <PublishHistory history={history} />
       </div>
     ),
-    [props.payload, props.editorMode, history, handleSubmit, publish]
+    [props.payload, props.editorMode, props.userProperties, history, handleSubmit, publish]
   )
 }
 
@@ -217,6 +223,10 @@ const mapStateToProps = (state: AppState) => {
     payload: state.publish.payload,
     editorMode: state.publish.editorMode,
     retain: state.publish.retain,
+    userProperties: state.publish.userProperties,
+    // The negotiated version, not the configured one: "Auto" only resolves to a
+    // concrete version once the broker has accepted the connection.
+    protocolVersion: state.connection.protocolVersion,
   }
 }
 

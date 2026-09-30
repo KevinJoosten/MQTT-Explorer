@@ -3,6 +3,7 @@ import BooleanSwitch from './BooleanSwitch'
 import BrokerStatistics from './BrokerStatistics'
 import ChevronRight from '@mui/icons-material/ChevronRight'
 import TimeLocale from './TimeLocale'
+import { autoExpandLimitSet } from './autoExpandLimitSet'
 import { AppState } from '../../reducers'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
@@ -24,33 +25,6 @@ import {
   Typography,
   Tooltip,
 } from '@mui/material'
-
-export const autoExpandLimitSet = [
-  {
-    limit: 0,
-    name: 'Collapsed',
-  },
-  {
-    limit: 2,
-    name: 'Few',
-  },
-  {
-    limit: 5,
-    name: 'Some',
-  },
-  {
-    limit: 15,
-    name: 'Most',
-  },
-  {
-    limit: 30,
-    name: 'Most',
-  },
-  {
-    limit: 1e6,
-    name: 'All',
-  },
-]
 
 const styles = (theme: Theme) => ({
   drawer: {
@@ -86,6 +60,7 @@ interface Props {
   classes: any
   highlightTopicUpdates: boolean
   selectTopicWithMouseOver: boolean
+  showConnectionName: boolean
   store?: any
   topicOrder: TopicOrder
   visible: boolean
@@ -125,6 +100,20 @@ class Settings extends React.PureComponent<Props, {}> {
         tooltip="Select topics on mouse over"
         value={selectTopicWithMouseOver}
         action={toggle}
+      />
+    )
+  }
+
+  private toggleShowConnectionName() {
+    const { actions, showConnectionName } = this.props
+
+    return (
+      <BooleanSwitch
+        title="Connection Name"
+        tooltip="Show the stored connection name next to the host"
+        value={showConnectionName}
+        action={actions.settings.toggleShowConnectionName}
+        data-testid="connection-name-toggle"
       />
     )
   }
@@ -225,6 +214,7 @@ class Settings extends React.PureComponent<Props, {}> {
           <TimeLocale />
           {this.renderHighlightTopicUpdates()}
           {this.selectTopicsOnMouseOver()}
+          {this.toggleShowConnectionName()}
           {this.toggleTheme()}
         </div>
         <Tooltip placement="top" title="App Author">
@@ -245,6 +235,7 @@ const mapStateToProps = (state: AppState) => {
     visible: state.globalState.get('settingsVisible'),
     highlightTopicUpdates: state.settings.get('highlightTopicUpdates'),
     selectTopicWithMouseOver: state.settings.get('selectTopicWithMouseOver'),
+    showConnectionName: state.settings.get('showConnectionName'),
     theme: state.settings.get('theme'),
   }
 }

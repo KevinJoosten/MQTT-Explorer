@@ -58,8 +58,9 @@ export class ConnectionManager {
         topic,
         payload: decoded_payload,
         qos: packet.qos,
-        retain: packet.retain,
+        retain: Boolean(packet.retain),
         messageId: packet.messageId,
+        properties: packet.properties, // MQTT v5 properties
       })
     })
   }

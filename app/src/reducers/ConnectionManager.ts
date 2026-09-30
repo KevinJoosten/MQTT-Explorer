@@ -2,11 +2,17 @@ import { ConnectionOptions } from '../model/ConnectionOptions'
 import { createReducer } from './lib'
 import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 
+export type SortOption = 'name' | 'createdAt' | 'folder'
+
 export interface ConnectionManagerState {
   connections: { [s: string]: ConnectionOptions }
   selected?: string
   showAdvancedSettings: boolean
   showCertificateSettings: boolean
+  sortBy: SortOption
+  collapsedFolders: { [folderName: string]: boolean }
+  folderOrder: string[]
+  connectionOrder: { [folderName: string]: string[] }
 }
 
 const initialState: ConnectionManagerState = {
@@ -14,6 +20,10 @@ const initialState: ConnectionManagerState = {
   selected: undefined,
   showAdvancedSettings: false,
   showCertificateSettings: false,
+  sortBy: 'folder',
+  collapsedFolders: {},
+  folderOrder: [],
+  connectionOrder: {},
 }
 
 export type Action =
@@ -26,6 +36,10 @@ export type Action =
   | ToggleCertificateSettings
   | DeleteSubscription
   | AddSubscription
+  | SetSortBy
+  | ToggleFolderCollapse
+  | SetFolderOrder
+  | SetConnectionOrder
 
 export enum ActionTypes {
   CONNECTION_MANAGER_SET_CONNECTIONS = 'CONNECTION_MANAGER_SET_CONNECTIONS',
@@ -37,6 +51,10 @@ export enum ActionTypes {
   CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS = 'CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS',
   CONNECTION_MANAGER_ADD_SUBSCRIPTION = 'CONNECTION_MANAGER_ADD_SUBSCRIPTION',
   CONNECTION_MANAGER_DELETE_SUBSCRIPTION = 'CONNECTION_MANAGER_DELETE_SUBSCRIPTION',
+  CONNECTION_MANAGER_SET_SORT_BY = 'CONNECTION_MANAGER_SET_SORT_BY',
+  CONNECTION_MANAGER_TOGGLE_FOLDER_COLLAPSE = 'CONNECTION_MANAGER_TOGGLE_FOLDER_COLLAPSE',
+  CONNECTION_MANAGER_SET_FOLDER_ORDER = 'CONNECTION_MANAGER_SET_FOLDER_ORDER',
+  CONNECTION_MANAGER_SET_CONNECTION_ORDER = 'CONNECTION_MANAGER_SET_CONNECTION_ORDER',
 }
 
 export interface SetConnections {
@@ -85,6 +103,27 @@ export interface ToggleCertificateSettings {
   type: ActionTypes.CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS
 }
 
+export interface SetSortBy {
+  type: ActionTypes.CONNECTION_MANAGER_SET_SORT_BY
+  sortBy: SortOption
+}
+
+export interface ToggleFolderCollapse {
+  type: ActionTypes.CONNECTION_MANAGER_TOGGLE_FOLDER_COLLAPSE
+  folderName: string
+}
+
+export interface SetFolderOrder {
+  type: ActionTypes.CONNECTION_MANAGER_SET_FOLDER_ORDER
+  folderOrder: string[]
+}
+
+export interface SetConnectionOrder {
+  type: ActionTypes.CONNECTION_MANAGER_SET_CONNECTION_ORDER
+  folderName: string
+  connectionOrder: string[]
+}
+
 export const connectionManagerReducer = createReducer(initialState, {
   CONNECTION_MANAGER_SET_CONNECTIONS: setConnections,
   CONNECTION_MANAGER_SELECT_CONNECTION: selectConnection,
@@ -93,8 +132,12 @@ export const connectionManagerReducer = createReducer(initialState, {
   CONNECTION_MANAGER_DELETE_CONNECTION: deleteConnection,
   CONNECTION_MANAGER_TOGGLE_ADVANCED_SETTINGS: toggleAdvancedSettings,
   CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS: toggleCertificateSettings,
-  CONNECTION_MANAGER_DELETE_SUBSCRIPTION: deleteSubscription,
   CONNECTION_MANAGER_ADD_SUBSCRIPTION: addSubscription,
+  CONNECTION_MANAGER_DELETE_SUBSCRIPTION: deleteSubscription,
+  CONNECTION_MANAGER_SET_SORT_BY: setSortBy,
+  CONNECTION_MANAGER_TOGGLE_FOLDER_COLLAPSE: toggleFolderCollapse,
+  CONNECTION_MANAGER_SET_FOLDER_ORDER: setFolderOrder,
+  CONNECTION_MANAGER_SET_CONNECTION_ORDER: setConnectionOrder,
 })
 
 function setConnections(state: ConnectionManagerState, action: SetConnections): ConnectionManagerState {
@@ -219,6 +262,40 @@ function updateConnection(state: ConnectionManagerState, action: UpdateConnectio
     connections: {
       ...state.connections,
       [action.connectionId]: connection,
+    },
+  }
+}
+
+function setSortBy(state: ConnectionManagerState, action: SetSortBy): ConnectionManagerState {
+  return {
+    ...state,
+    sortBy: action.sortBy,
+  }
+}
+
+function toggleFolderCollapse(state: ConnectionManagerState, action: ToggleFolderCollapse): ConnectionManagerState {
+  return {
+    ...state,
+    collapsedFolders: {
+      ...state.collapsedFolders,
+      [action.folderName]: !state.collapsedFolders[action.folderName],
+    },
+  }
+}
+
+function setFolderOrder(state: ConnectionManagerState, action: SetFolderOrder): ConnectionManagerState {
+  return {
+    ...state,
+    folderOrder: action.folderOrder,
+  }
+}
+
+function setConnectionOrder(state: ConnectionManagerState, action: SetConnectionOrder): ConnectionManagerState {
+  return {
+    ...state,
+    connectionOrder: {
+      ...state.connectionOrder,
+      [action.folderName]: action.connectionOrder,
     },
   }
 }

@@ -13,6 +13,7 @@ export interface ConnectionState {
   connected: boolean
   connecting: boolean
   health?: ConnectionHealth
+  protocolVersion?: 3 | 4 | 5
 }
 
 export type Action = SetConnecting | SetConnected | SetDisconnected | ShowError
@@ -42,6 +43,7 @@ export interface SetDisconnected {
 
 export interface SetHealth {
   health: ConnectionHealth
+  protocolVersion?: 3 | 4 | 5
   type: ActionTypes.CONNECTION_SET_DISCONNECTED
 }
 
@@ -77,6 +79,7 @@ function setHealth(state: ConnectionState, action: SetHealth): ConnectionState {
   return {
     ...state,
     health: action.health,
+    protocolVersion: action.protocolVersion,
   }
 }
 

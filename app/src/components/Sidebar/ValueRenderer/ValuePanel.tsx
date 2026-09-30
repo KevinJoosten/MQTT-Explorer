@@ -17,6 +17,7 @@ import { sidebarActions } from '../../../actions'
 import DeleteSelectedTopicButton from './DeleteSelectedTopicButton'
 import { MessageId } from '../MessageId'
 import { useDecoder } from '../../hooks/useDecoder'
+import { RetainedIndicator, MessageProperties } from './MessageMeta'
 
 interface Props {
   node?: q.TreeNode<any>
@@ -51,7 +52,9 @@ function ValuePanel(props: Props) {
           <ActionButtons />
         </span>
         <span style={{ flex: 6, textAlign: 'right' }}>
-          {props.node.message.retain ? <DeleteSelectedTopicButton /> : null}
+          {(props.node.message.retain || props.node.wasRetained) && props.node.message.payload ? (
+            <DeleteSelectedTopicButton />
+          ) : null}
         </span>
         {messageMetaInfo()}
       </div>
@@ -79,6 +82,9 @@ function ValuePanel(props: Props) {
           <MessageId message={props.node.message} addComma={true} />
           {`QoS: ${props.node.message.qos}`}
         </Typography>
+        <div style={{ textAlign: 'right' }}>
+          <RetainedIndicator retain={props.node.message.retain} wasRetained={props.node.wasRetained} />
+        </div>
         <Typography style={{ textAlign: 'right' }}>
           <i>
             <DateFormatter date={props.node.message.received} />
@@ -116,6 +122,7 @@ function ValuePanel(props: Props) {
             <RenderedValue node={node} compareMessage={compareMessage} />
           </React.Suspense>
         </div>
+        <MessageProperties properties={node?.message?.properties} />
         <div>
           <MessageHistory onSelect={handleMessageHistorySelect} selected={props.compareMessage} node={props.node} />
         </div>

@@ -88,17 +88,35 @@ export const publish = (connectionId: string) => (dispatch: Dispatch<Action>, ge
   }
 
   const publishEvent = makePublishEvent(connectionId)
+  
+  // Convert user properties array to object format for MQTT v5
+  const userProperties: Record<string, string> = {}
+  state.publish.userProperties.forEach(prop => {
+    if (prop.key && prop.value) {
+      userProperties[prop.key] = prop.value
+    }
+  })
+  
   const mqttMessage: Partial<MqttMessage> = {
     topic,
     payload: state.publish.payload ? Base64Message.fromString(state.publish.payload) : null,
     retain: state.publish.retain,
     qos: state.publish.qos,
+    properties: Object.keys(userProperties).length > 0 ? { userProperties } : undefined,
   }
+  
   rendererEvents.emit(publishEvent, mqttMessage)
 }
 
 export const toggleRetain = (): Action => {
   return {
     type: ActionTypes.PUBLISH_TOGGLE_RETAIN,
+  }
+}
+
+export const setUserProperties = (userProperties: Array<{ key: string; value: string }>): Action => {
+  return {
+    userProperties,
+    type: ActionTypes.PUBLISH_SET_USER_PROPERTIES,
   }
 }

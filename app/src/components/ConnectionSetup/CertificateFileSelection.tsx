@@ -26,7 +26,7 @@ function CertificateFileSelection(props: {
   }, [props.connection, props.certificateType])
 
   return (
-    <span>
+    <span className={props.classes.root}>
       <Tooltip title="Select certificate" placement="top">
         <Button
           variant="contained"
@@ -65,8 +65,14 @@ const mapDispatchToProps = (dispatch: any) => {
 }
 
 const styles = (theme: Theme) => ({
-  certificateName: {
+  root: {
+    display: 'flex' as 'flex',
+    alignItems: 'center',
     width: '100%',
+  },
+  certificateName: {
+    flex: '1 1 auto',
+    minWidth: 0,
     height: 'calc(1em + 4px)',
     overflow: 'hidden' as 'hidden',
     whiteSpace: 'nowrap' as 'nowrap',
@@ -74,8 +80,8 @@ const styles = (theme: Theme) => ({
     color: theme.palette.text.secondary,
   },
   button: {
-    marginTop: theme.spacing(3),
     marginRight: theme.spacing(2),
+    flex: '0 0 auto',
   },
 })
 

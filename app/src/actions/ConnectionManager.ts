@@ -10,17 +10,22 @@ import { default as persistentStorage, StorageIdentifier } from '../utils/Persis
 import { Dispatch } from 'redux'
 import { showError } from './Global'
 import * as path from 'path'
-import { ActionTypes, Action } from '../reducers/ConnectionManager'
+import { ActionTypes, Action, SortOption } from '../reducers/ConnectionManager'
 import { Subscription } from '../../../backend/src/DataSource/MqttSource'
 import { connectionsMigrator } from './migrations/Connection'
-import { rendererRpc, readFromFile } from '../eventBus'
+import { rendererRpc, readFromFile, readCertificateBundle } from '../eventBus'
 import { makeOpenDialogRpc } from '../../../events/OpenDialogRequest'
+import { v4 } from 'uuid'
 
 export interface ConnectionDictionary {
   [s: string]: ConnectionOptions
 }
 const storedConnectionsIdentifier: StorageIdentifier<ConnectionDictionary> = {
   id: 'ConnectionManager_connections',
+}
+
+const lastSelectedConnectionIdentifier: StorageIdentifier<string> = {
+  id: 'ConnectionManager_lastSelected',
 }
 
 export const loadConnectionSettings = () => async (dispatch: Dispatch<any>, getState: () => AppState) => {
@@ -34,6 +39,12 @@ export const loadConnectionSettings = () => async (dispatch: Dispatch<any>, getS
       connections = connectionsMigrator.applyMigrations(connections)
       await persistentStorage.store(storedConnectionsIdentifier, connections)
     }
+
+    // Heal any cert data that was stored as comma-separated decimal bytes
+    // (caused by Uint8Array.toString('base64') ignoring the encoding arg in old builds)
+    if (connections && repairCorruptCertData(connections)) {
+      await persistentStorage.store(storedConnectionsIdentifier, connections)
+    }
   } catch (error) {
     dispatch(showError(error))
   }
@@ -43,10 +54,22 @@ export const loadConnectionSettings = () => async (dispatch: Dispatch<any>, getS
   }
 
   dispatch(setConnections(connections))
-  const firstKey = Object.keys(connections)[0]
-  if (firstKey) {
-    dispatch(selectConnection(firstKey))
+  const connectionIds = Object.keys(connections)
+  if (connectionIds.length === 0) {
+    return
   }
+
+  // Restore the last selected connection, falling back to the first
+  let idToSelect = connectionIds[0]
+  try {
+    const lastSelected = await persistentStorage.load(lastSelectedConnectionIdentifier)
+    if (lastSelected && connections[lastSelected]) {
+      idToSelect = lastSelected
+    }
+  } catch {
+    // ignore – fall back to first connection
+  }
+  dispatch(selectConnection(idToSelect))
 }
 
 export type CertificateTypes = 'selfSignedCertificate' | 'clientCertificate' | 'clientKey'
@@ -59,6 +82,44 @@ export const selectCertificate =
           [type]: certificate,
         })
       )
+    } catch (error) {
+      dispatch(showError(error))
+    }
+  }
+
+export const selectCertificateBundle =
+  (connectionId: string) => async (dispatch: Dispatch<any>, getState: () => AppState) => {
+    try {
+      const openDialogReturnValue = await rendererRpc.call(makeOpenDialogRpc(), {
+        properties: ['openFile'],
+        filters: [{ name: 'Certificate bundle', extensions: ['zip'] }],
+        securityScopedBookmarks: true,
+      })
+
+      const selectedFile = openDialogReturnValue.filePaths && openDialogReturnValue.filePaths[0]
+      if (!selectedFile) {
+        return
+      }
+
+      const bundle = await rendererRpc.call(readCertificateBundle, { filePath: selectedFile })
+
+      const changeSet: Partial<ConnectionOptions> = {}
+      if (bundle.selfSignedCertificate) {
+        changeSet.selfSignedCertificate = bundle.selfSignedCertificate
+      }
+      if (bundle.clientCertificate) {
+        changeSet.clientCertificate = bundle.clientCertificate
+      }
+      if (bundle.clientKey) {
+        changeSet.clientKey = bundle.clientKey
+      }
+
+      if (Object.keys(changeSet).length === 0) {
+        dispatch(showError('No certificates or keys were found in the selected bundle.'))
+        return
+      }
+
+      dispatch(updateConnection(connectionId, changeSet))
     } catch (error) {
       dispatch(showError(error))
     }
@@ -81,12 +142,17 @@ async function openCertificate(): Promise<CertificateParameters> {
   }
 
   const data = await rendererRpc.call(readFromFile, { filePath: selectedFile })
-  if (data.length > 16_384 || data.length < 64) {
+  // Electron IPC deserializes Buffers as Uint8Array in the renderer process.
+  // Buffer.from() normalises either type before calling .toString('base64').
+  // Without this, Uint8Array.toString('base64') ignores the argument and returns
+  // comma-separated decimal bytes, producing garbage that causes NO_START_LINE.
+  const buf = Buffer.from(data as any)
+  if (buf.length > 16_384 || buf.length < 64) {
     throw rejectReasons.certificateSizeDoesNotMatch
   }
 
   return {
-    data: data.toString('base64'),
+    data: buf.toString('base64'),
     name: path.basename(selectedFile),
   }
 }
@@ -98,6 +164,32 @@ export const saveConnectionSettings = () => async (dispatch: Dispatch<any>, getS
   } catch (error) {
     dispatch(showError(error))
   }
+}
+
+export const saveConnectionAsCopy = () => async (dispatch: Dispatch<any>, getState: () => AppState) => {
+  const state = getState()
+  const selectedId = state.connectionManager.selected
+  
+  if (!selectedId) {
+    return
+  }
+  
+  const currentConnection = state.connectionManager.connections[selectedId]
+  
+  if (!currentConnection) {
+    return
+  }
+
+  const newConnection: ConnectionOptions = {
+    ...currentConnection,
+    id: v4(),
+    name: `${currentConnection.name} (Copy)`,
+    createdAt: Date.now(),
+  }
+
+  dispatch(addConnection(newConnection))
+  dispatch(selectConnection(newConnection.id))
+  dispatch(saveConnectionSettings())
 }
 
 export const updateConnection = (connectionId: string, changeSet: Partial<ConnectionOptions>): Action => ({
@@ -129,10 +221,15 @@ export const setConnections = (connections: { [s: string]: ConnectionOptions }):
   type: ActionTypes.CONNECTION_MANAGER_SET_CONNECTIONS,
 })
 
-export const selectConnection = (connectionId: string): Action => ({
+const selectConnectionAction = (connectionId: string): Action => ({
   selected: connectionId,
   type: ActionTypes.CONNECTION_MANAGER_SELECT_CONNECTION,
 })
+
+export const selectConnection = (connectionId: string) => (dispatch: Dispatch<any>) => {
+  persistentStorage.store(lastSelectedConnectionIdentifier, connectionId).catch(() => {/* ignore */})
+  dispatch(selectConnectionAction(connectionId))
+}
 
 export const addConnection = (connection: ConnectionOptions): Action => ({
   connection,
@@ -146,6 +243,62 @@ export const toggleAdvancedSettings = (): Action => ({
 export const toggleCertificateSettings = (): Action => ({
   type: ActionTypes.CONNECTION_MANAGER_TOGGLE_CERTIFICATE_SETTINGS,
 })
+
+export const setSortBy = (sortBy: SortOption): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_SET_SORT_BY,
+  sortBy,
+})
+
+export const toggleFolderCollapse = (folderName: string): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_TOGGLE_FOLDER_COLLAPSE,
+  folderName,
+})
+
+export const setFolderOrder = (folderOrder: string[]): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_SET_FOLDER_ORDER,
+  folderOrder,
+})
+
+export const setConnectionOrder = (folderName: string, connectionOrder: string[]): Action => ({
+  type: ActionTypes.CONNECTION_MANAGER_SET_CONNECTION_ORDER,
+  folderName,
+  connectionOrder,
+})
+
+export const renameFolder = (oldName: string, newName: string) => (dispatch: Dispatch<any>, getState: () => AppState) => {
+  const connections = getState().connectionManager.connections
+  const updates: { [id: string]: Partial<ConnectionOptions> } = {}
+  
+  Object.entries(connections).forEach(([id, connection]) => {
+    if (connection.folder === oldName) {
+      updates[id] = { folder: newName }
+    }
+  })
+  
+  Object.entries(updates).forEach(([id, update]) => {
+    dispatch(updateConnection(id, update))
+  })
+  
+  dispatch(saveConnectionSettings())
+}
+
+export const deleteFolder = (folderName: string, deleteConnections: boolean) => (dispatch: Dispatch<any>, getState: () => AppState) => {
+  const connections = getState().connectionManager.connections
+  
+  Object.entries(connections).forEach(([id, connection]) => {
+    if (connection.folder === folderName) {
+      if (deleteConnections) {
+        dispatch(deleteConnection(id))
+      } else {
+        dispatch(updateConnection(id, { folder: undefined }))
+      }
+    }
+  })
+  
+  if (!deleteConnections) {
+    dispatch(saveConnectionSettings())
+  }
+}
 
 export const deleteConnection = (connectionId: string) => (dispatch: Dispatch<any>, getState: () => AppState) => {
   const connectionIds = Object.keys(getState().connectionManager.connections)
@@ -179,4 +332,34 @@ async function ensureConnectionsHaveBeenInitialized() {
 
     clearLegacyConnectionOptions()
   }
+}
+
+/**
+ * Detects and repairs cert data that was stored as comma-separated decimal bytes
+ * instead of base64 due to Uint8Array.toString('base64') ignoring the encoding arg
+ * in Electron IPC deserialization before the Buffer.from() fix was applied.
+ * Returns true if any fields were repaired (so the caller can persist the fix).
+ */
+function repairCorruptCertData(connections: ConnectionDictionary): boolean {
+  const certFields: CertificateTypes[] = ['selfSignedCertificate', 'clientCertificate', 'clientKey']
+  let repaired = false
+  Object.values(connections).forEach((conn: any) => {
+    certFields.forEach(field => {
+      const cert = conn[field]
+      if (!cert || !cert.data) return
+      const decoded = Buffer.from(cert.data, 'base64').toString('utf8')
+      if (!decoded.startsWith('-----BEGIN')) {
+        // Looks like comma-separated decimal bytes — convert back
+        try {
+          const bytes = cert.data.split(',').map(Number)
+          if (bytes.some(isNaN)) return
+          cert.data = Buffer.from(bytes).toString('base64')
+          repaired = true
+        } catch {
+          // leave as-is if conversion fails
+        }
+      }
+    })
+  })
+  return repaired
 }

@@ -71,7 +71,7 @@ class ConnectionSetup extends React.PureComponent<Props, {}> {
                 </Typography>
                 <Typography className={classes.connectionUri}>{mqttConnection && mqttConnection.url}</Typography>
               </Toolbar>
-              {this.renderSettings()}
+              <div className={classes.settingsScroll}>{this.renderSettings()}</div>
             </div>
           </Paper>
         </Modal>
@@ -109,6 +109,18 @@ const styles = (theme: Theme) => ({
     backgroundColor: theme.palette.background.paper,
     padding: theme.spacing(2),
     flex: 10,
+    // Keep the title fixed and let only the settings area below it scroll,
+    // so tall content (e.g. certificates with filenames) never pushes the
+    // Back button out of the fixed-height panel.
+    display: 'flex' as 'flex',
+    flexDirection: 'column' as 'column',
+    minHeight: 0,
+    overflow: 'hidden' as 'hidden',
+  },
+  settingsScroll: {
+    flex: 1,
+    minHeight: 0,
+    overflowY: 'auto' as 'auto',
   },
   connectionUri: {
     width: '27em',

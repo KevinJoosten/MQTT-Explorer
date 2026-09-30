@@ -51,6 +51,7 @@ const updateHealth = (dataSourceState: DataSourceState) => (dispatch: Dispatch<a
   dispatch({
     type: ActionTypes.CONNECTION_SET_HEALTH,
     health: state,
+    protocolVersion: dataSourceState.protocolVersion,
   })
 }
 

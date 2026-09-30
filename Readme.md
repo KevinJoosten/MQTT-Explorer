@@ -1,5 +1,8 @@
 # [MQTT Explorer](https://mqtt-explorer.com)
 
+> **Community fork** of [thomasnordquist/MQTT-Explorer](https://github.com/thomasnordquist/MQTT-Explorer) by Thomas Nordquist, with modifications. See [License](#license) for details.
+> If you find MQTT Explorer useful, please support its original author via [Patreon](https://www.patreon.com/thomasnordquist) or [PayPal](https://paypal.me/ThomasNordquist).
+
 [![Downloads](https://img.shields.io/github/release/thomasnordquist/mqtt-explorer.svg)](https://travis-ci.org/thomasnordquist/MQTT-Explorer/releases)
 [![Downloads](https://img.shields.io/github/downloads/thomasnordquist/mqtt-explorer/total.svg)](https://travis-ci.org/thomasnordquist/MQTT-Explorer/releases)
 [![Build_Status](https://travis-ci.org/thomasnordquist/MQTT-Explorer.svg?branch=master)](https://travis-ci.org/thomasnordquist/MQTT-Explorer)
@@ -259,3 +262,9 @@ The readme will be generated from the docs.
 **Special requirement:** When distributing, the attribution and donation page may not be altered or made less accessible without explicit approval.
 
 The license allows for anyone to adapt, share, and redistribute the material, as long as they give appropriate credit and distribute any derivative works under the same license.
+
+### This fork
+
+Original work © Thomas Nordquist, [thomasnordquist/MQTT-Explorer](https://github.com/thomasnordquist/MQTT-Explorer), used under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+This fork is based on upstream commit [`8f86d27`](https://github.com/thomasnordquist/MQTT-Explorer/commit/8f86d27), the last upstream version published under CC BY-SA 4.0, and has been modified by Kevin Joosten. The modifications are licensed under CC BY-SA 4.0 as well.
+The original author has not reviewed or endorsed this fork.

@@ -32,17 +32,16 @@ export default {
       crypto: false,
       url: 'url/',
       os: 'os-browserify/browser',
-      
-      events: 'events/',
+      events: 'events',
     },
   },
 
   // Browser-specific plugins
   plugins: [
-    // Replace base config's DefinePlugin with one that includes both NODE_ENV and BROWSER_MODE
-    ...baseConfig.plugins.filter(plugin => !(plugin instanceof webpack.DefinePlugin)),
+    // Keep all base plugins (DefinePlugin removed from base, so no conflict)
+    ...baseConfig.plugins,
+    // Add BROWSER_MODE flag — NODE_ENV is handled automatically by webpack's `mode`
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       'process.env.BROWSER_MODE': JSON.stringify('true'),
     }),
     // Replace events/index with browser-specific version that excludes IPC EventBus

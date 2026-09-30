@@ -59,4 +59,15 @@ tmux send-keys -t record q
 # Ensure video is written
 sleep 5
 
+# Convert raw video to MP4
+if [ -f qrawvideorgb24.yuv ]; then
+  echo "Converting video to MP4..."
+  ffmpeg -f rawvideo -pix_fmt yuv420p -s 1024x720 -r 20 -i qrawvideorgb24.yuv -c:v libx264 -preset fast -crf 22 ui-test.mp4
+  
+  echo "Creating GIF from video..."
+  ffmpeg -i ui-test.mp4 -vf "fps=10,scale=800:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 ui-test.gif
+  
+  echo "Video files created: ui-test.mp4 and ui-test.gif"
+fi
+
 exit $TEST_EXIT_CODE

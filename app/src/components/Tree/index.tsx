@@ -5,6 +5,7 @@ import { AppState } from '../../reducers'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { KeyCodes } from '../../utils/KeyCodes'
+import { rootLabel } from './rootLabel'
 import { SettingsState } from '../../reducers/Settings'
 import { TopicViewModel } from '../../model/TopicViewModel'
 import { treeActions } from '../../actions'
@@ -20,6 +21,7 @@ interface Props {
   connectionId?: string
   tree?: q.Tree<TopicViewModel>
   host?: string
+  connectionName?: string
   paused: boolean
   settings: SettingsState
 }
@@ -138,19 +140,23 @@ class TreeComponent extends React.PureComponent<Props, State> {
       paddingBottom: '16px', // avoid conflict with chart panel Resizer
     }
 
+    const treeNode = (
+      <TreeNode
+        key={tree.hash()}
+        isRoot={true}
+        treeNode={tree}
+        name={rootLabel(this.props.host, this.props.connectionName, this.props.settings.get('showConnectionName'))}
+        collapsed={false}
+        settings={this.props.settings}
+        lastUpdate={tree.lastUpdate}
+        actions={this.props.actions}
+        selectTopicAction={this.props.actions.selectTopic}
+      />
+    )
+
     return (
       <div style={style} tabIndex={0} onKeyDown={this.keyEventHandler}>
-        <TreeNode
-          key={tree.hash()}
-          isRoot={true}
-          treeNode={tree}
-          name={this.props.host}
-          collapsed={false}
-          settings={this.props.settings}
-          lastUpdate={tree.lastUpdate}
-          actions={this.props.actions}
-          selectTopicAction={this.props.actions.selectTopic}
-        />
+        {treeNode}
       </div>
     )
   }
@@ -162,6 +168,9 @@ const mapStateToProps = (state: AppState) => {
     paused: state.tree.get('paused'),
     filter: state.tree.get('filter'),
     host: state.connection.host,
+    connectionName: state.connection.connectionId
+      ? state.connectionManager.connections[state.connection.connectionId]?.name
+      : undefined,
     settings: state.settings,
   }
 }
